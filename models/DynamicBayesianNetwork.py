@@ -580,7 +580,7 @@ class DynamicBayesianNetwork(DirectedGraph):
         (('D', 1), ('G', 1)),
         (('D', 0), ('G', 0)),
         (('D', 0), ('D', 1))]
-        >> dbn_copy.get_cpds()
+        >> dbn_copy.get_cpds()OrderedDict
         [<TabularCPD representing P(('G', 0):3 | ('I', 0):2, ('D', 0):2) at 0x7f13961a3320>]
         """
         dbn = DynamicBayesianNetwork()
@@ -590,6 +590,11 @@ class DynamicBayesianNetwork(DirectedGraph):
         dbn.add_cpds(*cpd_copy)
         return dbn
 
+    def get_evidence(self, cpd):
+        evidence = cpd.get_evidence()
+        evidence = ['(' + str(X) + ', ' + str(Y) + ')' for (X, Y) in evidence]
+        return ''.join(evidence)
+
     def create_samples(self, num_samples=10):
         samples = list()
         reductions_cache = dict()
@@ -598,7 +603,7 @@ class DynamicBayesianNetwork(DirectedGraph):
             sample = dict()
             for node in top_order:
                 curr_cpd = self.get_cpds(node)
-                evidence = curr_cpd.get_evidence()
+                evidence = self.get_evidence(curr_cpd)
                 ev_index = 0
                 if len(evidence) != 0:
                     for var in evidence:

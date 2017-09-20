@@ -108,7 +108,7 @@ class BaseEstimator(object):
 
         if not parents:
             # count how often each state of 'variable' occured
-            state_count_data = data.ix[:, variable].value_counts()
+            state_count_data = data[variable].value_counts()
             state_counts = state_count_data.reindex(self.state_names[variable]).fillna(0).to_frame()
 
         else:
