@@ -592,6 +592,7 @@ class DynamicBayesianNetwork(DirectedGraph):
 
     def create_samples(self, num_samples=10):
         samples = list()
+        reductions_cache = dict()
         for i in range(1, num_samples):
             top_order = list(nx.topological_sort(self))
             sample = dict()

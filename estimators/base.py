@@ -51,7 +51,7 @@ class BaseEstimator(object):
 
     def _collect_state_names(self, variable):
         "Return a list of states that the variable takes in the data"
-        states = sorted(list(self.data.ix[:, variable].dropna().unique()))
+        states = sorted(list(self.data[variable].dropna().unique()))
         return states
 
     def state_counts(self, variable, parents=[], complete_samples_only=None):

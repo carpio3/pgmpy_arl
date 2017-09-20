@@ -56,6 +56,8 @@ class HillClimbSearchDBN(StructureEstimator):
                                set(model.edges()) -
                                set([(Y, X) for (X, Y) in model.edges()]))
 
+        potential_new_edges = set((X, Y) for (X, Y) in potential_new_edges if X.split("_")[1] <= Y.split("_")[1])
+
         for (X, Y) in potential_new_edges:  # (1) add single edge
             if nx.is_directed_acyclic_graph(nx.DiGraph(model.edges() + [(X, Y)])):
                 operation = ('+', (X, Y))
