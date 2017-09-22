@@ -4,6 +4,7 @@ from warnings import warn
 import numpy as np
 import pandas as pd
 from scipy.stats import chisquare
+from pgmpy.models import DynamicBayesianNetwork
 
 
 class BaseEstimator(object):
@@ -272,7 +273,8 @@ class ParameterEstimator(BaseEstimator):
             This sets the behavior of the `state_count`-method.
         """
 
-        if not set(model.nodes()) <= set(data.columns.values):
+        if not set(model.nodes()) <= set(data.columns.values) \
+                and not isinstance(model, DynamicBayesianNetwork):
             raise ValueError("variable names of the model must be identical to column names in data")
         self.model = model
 

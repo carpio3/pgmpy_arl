@@ -4,7 +4,7 @@ import numpy as np
 
 from pgmpy.estimators import ParameterEstimator
 from pgmpy.factors.discrete import TabularCPD
-from pgmpy.models import BayesianModel
+from pgmpy.models import BayesianModel, DynamicBayesianNetwork
 
 
 class MaximumLikelihoodEstimator(ParameterEstimator):
@@ -43,7 +43,7 @@ class MaximumLikelihoodEstimator(ParameterEstimator):
         >>> estimator = MaximumLikelihoodEstimator(model, data)
         """
 
-        if not isinstance(model, BayesianModel):
+        if not isinstance(model, BayesianModel) and not isinstance(model, DynamicBayesianNetwork):
             raise NotImplementedError("Maximum Likelihood Estimate is only implemented for BayesianModel")
 
         super(MaximumLikelihoodEstimator, self).__init__(model, data, **kwargs)
@@ -75,7 +75,14 @@ class MaximumLikelihoodEstimator(ParameterEstimator):
         """
         parameters = []
 
-        for node in sorted(self.model.nodes()):
+        nodes = list()
+        if isinstance(self.model, DynamicBayesianNetwork):
+            for i in range(0,2):
+                nodes.extend(self.model.get_slice_nodes(time_slice=i))
+        else:
+            nodes = sorted(self.model.nodes())
+
+        for node in sorted(nodes):
             cpd = self.estimate_cpd(node)
             parameters.append(cpd)
 

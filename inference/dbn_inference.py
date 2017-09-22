@@ -64,8 +64,8 @@ class DBNInference(Inference):
         query
         """
         super(DBNInference, self).__init__(model)
-        self.interface_nodes_0 = model.get_interface_nodes(time_slice=0)
-        self.interface_nodes_1 = model.get_interface_nodes(time_slice=1)
+        self.interface_nodes_0 = set(model.get_interface_nodes(time_slice=0))
+        self.interface_nodes_1 = set(model.get_interface_nodes(time_slice=1))
 
         start_markov_model = self.start_bayesian_model.to_markov_model()
         one_and_half_markov_model = self.one_and_half_model.to_markov_model()

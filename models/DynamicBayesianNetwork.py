@@ -380,7 +380,7 @@ class DynamicBayesianNetwork(DirectedGraph):
 
         self.cpds.extend(cpds)
 
-    def get_cpds(self, node=None, time_slice=0):
+    def get_cpds(self, node=None, time_slice=-1):
         """
         Returns the CPDs that have been associated with the network.
 
@@ -415,8 +415,13 @@ class DynamicBayesianNetwork(DirectedGraph):
                 for cpd in self.cpds:
                     if cpd.variable == node:
                         return cpd
-        else:
+        elif time_slice == 0:
             return [cpd for cpd in self.cpds if set(list(cpd.variables)).issubset(self.get_slice_nodes(time_slice))]
+        elif time_slice > 0:
+            return [cpd for cpd in self.cpds if set(list(cpd.variables)).issubset(set(self.get_slice_nodes(time_slice)
+                                                                                      + self.get_interface_nodes()))]
+        else:
+            return self.cpds
 
     def remove_cpds(self, *cpds):
         """
