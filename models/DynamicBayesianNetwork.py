@@ -100,6 +100,9 @@ class DynamicBayesianNetwork(DirectedGraph):
         """
         super(DynamicBayesianNetwork, self).add_node((node, 0), **attr)
 
+    def add_node_ts(self, node, t=0, **attr):
+        super(DynamicBayesianNetwork, self).add_node((node, t), **attr)
+
     def add_nodes_from(self, nodes, **attr):
         """
         Add multiple nodes to the Network.
@@ -117,6 +120,11 @@ class DynamicBayesianNetwork(DirectedGraph):
         """
         for node in nodes:
             self.add_node(node)
+
+    def add_nodes_from_ts(self, nodes, slices=0, **attr):
+        for t in slices:
+            for node in nodes:
+                self.add_node_ts(node, t)
 
     def nodes(self):
         """
@@ -590,20 +598,14 @@ class DynamicBayesianNetwork(DirectedGraph):
         dbn.add_cpds(*cpd_copy)
         return dbn
 
-    def get_evidence(self, cpd):
-        evidence = cpd.get_evidence()
-        evidence = ['(' + str(X) + ', ' + str(Y) + ')' for (X, Y) in evidence]
-        return ''.join(evidence)
-
     def create_samples(self, num_samples=10):
         samples = list()
-        reductions_cache = dict()
         for i in range(1, num_samples):
             top_order = list(nx.topological_sort(self))
             sample = dict()
             for node in top_order:
                 curr_cpd = self.get_cpds(node)
-                evidence = self.get_evidence(curr_cpd)
+                evidence = curr_cpd.get_evidence()
                 ev_index = 0
                 if len(evidence) != 0:
                     for var in evidence:
@@ -618,3 +620,58 @@ class DynamicBayesianNetwork(DirectedGraph):
                 sample[node] = row_index
             samples.append(sample)
         return samples
+
+    def fit(self, data, estimator=None, state_names=[], complete_samples_only=True, **kwargs):
+        """
+        Estimates the CPD for each variable based on a given data set.
+
+        Parameters
+        ----------
+        data: pandas DataFrame object
+            DataFrame object with column names identical to the variable names of the network.
+            (If some values in the data are missing the data cells should be set to `numpy.NaN`.
+            Note that pandas converts each column containing `numpy.NaN`s to dtype `float`.)
+
+        estimator: Estimator class
+            One of:
+            - MaximumLikelihoodEstimator (default)
+            - BayesianEstimator: In this case, pass 'prior_type' and either 'pseudo_counts'
+                or 'equivalent_sample_size' as additional keyword arguments.
+                See `BayesianEstimator.get_parameters()` for usage.
+
+        state_names: dict (optional)
+            A dict indicating, for each variable, the discrete set of states
+            that the variable can take. If unspecified, the observed values
+            in the data set are taken to be the only possible states.
+
+        complete_samples_only: bool (default `True`)
+            Specifies how to deal with missing data, if present. If set to `True` all rows
+            that contain `np.Nan` somewhere are ignored. If `False` then, for each variable,
+            every row where neither the variable nor its parents are `np.NaN` is used.
+
+        Examples
+        --------
+        >>> import pandas as pd
+        >>> from pgmpy.models import BayesianModel
+        >>> from pgmpy.estimators import MaximumLikelihoodEstimator
+        >>> data = pd.DataFrame(data={'A': [0, 0, 1], 'B': [0, 1, 0], 'C': [1, 1, 0]})
+        >>> model = BayesianModel([('A', 'C'), ('B', 'C')])
+        >>> model.fit(data)
+        >>> model.get_cpds()
+        [<TabularCPD representing P(A:2) at 0x7fb98a7d50f0>,
+        <TabularCPD representing P(B:2) at 0x7fb98a7d5588>,
+        <TabularCPD representing P(C:2 | A:2, B:2) at 0x7fb98a7b1f98>]
+        """
+
+        from pgmpy.estimators import MaximumLikelihoodEstimator, BayesianEstimator, BaseEstimator
+
+        if estimator is None:
+            estimator = MaximumLikelihoodEstimator
+        else:
+            if not issubclass(estimator, BaseEstimator):
+                raise TypeError("Estimator object should be a valid pgmpy estimator.")
+
+        _estimator = estimator(self, data, state_names=state_names,
+                                   complete_samples_only=complete_samples_only)
+        cpds_list = _estimator.get_parameters(**kwargs)
+        self.add_cpds(*cpds_list)

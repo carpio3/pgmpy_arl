@@ -15,6 +15,7 @@ from pgmpy.independencies import Independencies
 from pgmpy.extern import six
 from pgmpy.extern.six.moves import range, reduce
 from pgmpy.models.MarkovModel import MarkovModel
+from pgmpy.models import DynamicBayesianNetwork
 
 
 class BayesianModel(DirectedGraph):

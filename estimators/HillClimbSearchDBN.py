@@ -4,7 +4,7 @@ from itertools import permutations
 import networkx as nx
 
 from pgmpy.estimators import StructureEstimator, K2Score
-from pgmpy.models import BayesianModel
+from pgmpy.models import DynamicBayesianNetwork
 
 
 class HillClimbSearchDBN(StructureEstimator):
@@ -141,10 +141,12 @@ class HillClimbSearchDBN(StructureEstimator):
         epsilon = 1e-8
         nodes = self.state_names.keys()
         if start is None:
-            start = BayesianModel()
-            start.add_nodes_from(nodes)
-        elif not isinstance(start, BayesianModel) or not set(start.nodes()) == set(nodes):
-            raise ValueError("'start' should be a BayesianModel with the same variables as the data set, or 'None'.")
+            start = DynamicBayesianNetwork()
+            nodes = set(X[0] for X in nodes)
+            start.add_nodes_from_ts(nodes, [0, 1])
+        elif not isinstance(start, DynamicBayesianNetwork) or not set(start.nodes()) == set(nodes):
+            raise ValueError("'start' should be a DynamicBayesianModel "
+                             "with the same variables as the data set, or 'None'.")
 
         tabu_list = []
         current_model = start
