@@ -77,7 +77,8 @@ class HillClimbSearchDBN(StructureEstimator):
                 score_delta = local_score(Y, new_parents) - local_score(Y, old_parents)
                 yield(operation, score_delta)
 
-        for (X, Y) in model.edges():  # (3) flip single edge
+        flips = set((X, Y) for (X, Y) in model.edges() if X[1] == Y[1])
+        for (X, Y) in flips:  # (3) flip single edge
             new_edges = model.edges() + [(Y, X)]
             new_edges.remove((X, Y))
             if nx.is_directed_acyclic_graph(nx.DiGraph(new_edges)):
