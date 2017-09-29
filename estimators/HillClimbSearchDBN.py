@@ -56,7 +56,8 @@ class HillClimbSearchDBN(StructureEstimator):
                                set(model.edges()) -
                                set([(Y, X) for (X, Y) in model.edges()]))
 
-        potential_new_edges = set((X, Y) for (X, Y) in potential_new_edges if X[1] <= Y[1])
+        potential_new_edges = set((X, Y) for (X, Y) in potential_new_edges if
+                                  (X[1] == Y[1] or (X[1] + 1) == Y[1]))
 
         for (X, Y) in potential_new_edges:  # (1) add single edge
             if nx.is_directed_acyclic_graph(nx.DiGraph(model.edges() + [(X, Y)])):
@@ -144,14 +145,14 @@ class HillClimbSearchDBN(StructureEstimator):
         if start is None:
             start = DynamicBayesianNetwork()
             nodes = set(X[0] for X in nodes)
-            start.add_nodes_from_ts(nodes, [0, 1])
+            start.add_nodes_from_ts(nodes, [0, 1,2])
         elif not isinstance(start, DynamicBayesianNetwork) or not set(start.nodes()) == set(nodes):
             raise ValueError("'start' should be a DynamicBayesianModel "
                              "with the same variables as the data set, or 'None'.")
 
         tabu_list = []
         current_model = start
-
+        counter = 0
         while True:
             best_score_delta = 0
             best_operation = None
@@ -174,5 +175,7 @@ class HillClimbSearchDBN(StructureEstimator):
                 current_model.remove_edge(X, Y)
                 current_model.add_edge(Y, X)
                 tabu_list = ([best_operation] + tabu_list)[:tabu_length]
-
+            if counter % 10 == 0:
+                print counter
+            counter += 1
         return current_model
