@@ -323,7 +323,7 @@ class DynamicBayesianNetwork(DirectedGraph):
         if not isinstance(time_slice, int) or time_slice < 0:
             raise ValueError("The timeslice should be a positive value greater than or equal to zero")
 
-        return [(node, time_slice) for node in self.nodes()]
+        return [node for node in self.nodes()]
 
     def add_cpds(self, *cpds):
         """

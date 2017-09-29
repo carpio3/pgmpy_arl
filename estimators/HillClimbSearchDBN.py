@@ -60,33 +60,33 @@ class HillClimbSearchDBN(StructureEstimator):
                                   (X[1] == Y[1] or (X[1] + 1) == Y[1]))
 
         for (X, Y) in potential_new_edges:  # (1) add single edge
-            if nx.is_directed_acyclic_graph(nx.DiGraph(model.edges() + [(X, Y)])):
+            if nx.is_directed_acyclic_graph(nx.DiGraph(list(model.edges()) + [(X, Y)])):
                 operation = ('+', (X, Y))
                 if operation not in tabu_list:
                     old_parents = model.get_parents(Y)
-                    new_parents = old_parents + [X]
+                    new_parents = list(old_parents) + [X]
                     if max_indegree is None or len(new_parents) <= max_indegree:
-                        score_delta = local_score(Y, new_parents) - local_score(Y, old_parents)
+                        score_delta = local_score(Y, list(new_parents)) - local_score(Y, list(old_parents))
                         yield(operation, score_delta)
 
         for (X, Y) in model.edges():  # (2) remove single edge
             operation = ('-', (X, Y))
             if operation not in tabu_list:
                 old_parents = model.get_parents(Y)
-                new_parents = old_parents[:]
+                new_parents = list(old_parents)[:]
                 new_parents.remove(X)
-                score_delta = local_score(Y, new_parents) - local_score(Y, old_parents)
+                score_delta = local_score(Y, list(new_parents)) - local_score(Y, list(old_parents))
                 yield(operation, score_delta)
 
         flips = set((X, Y) for (X, Y) in model.edges() if X[1] == Y[1])
         for (X, Y) in flips:  # (3) flip single edge
-            new_edges = model.edges() + [(Y, X)]
+            new_edges = list(model.edges()) + [(Y, X)]
             new_edges.remove((X, Y))
             if nx.is_directed_acyclic_graph(nx.DiGraph(new_edges)):
                 operation = ('flip', (X, Y))
                 if operation not in tabu_list and ('flip', (Y, X)) not in tabu_list:
-                    old_X_parents = model.get_parents(X)
-                    old_Y_parents = model.get_parents(Y)
+                    old_X_parents = list(model.get_parents(X))
+                    old_Y_parents = list(model.get_parents(Y))
                     new_X_parents = old_X_parents + [Y]
                     new_Y_parents = old_Y_parents[:]
                     new_Y_parents.remove(X)
@@ -145,8 +145,8 @@ class HillClimbSearchDBN(StructureEstimator):
         if start is None:
             start = DynamicBayesianNetwork()
             nodes = set(X[0] for X in nodes)
-            # start.add_nodes_from_ts(nodes, [0, 1])
-            start.add_nodes_from_ts(nodes, [0, 1, 2])
+            start.add_nodes_from_ts(nodes, [0, 1])
+            # start.add_nodes_from_ts(nodes, [0, 1, 2])
             # start.add_edge(('A', 0), ('R', 1))
         elif not isinstance(start, DynamicBayesianNetwork):
             raise ValueError("'start' should be a DynamicBayesianModel "
