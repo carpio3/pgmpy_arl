@@ -145,8 +145,9 @@ class HillClimbSearchDBN(StructureEstimator):
         if start is None:
             start = DynamicBayesianNetwork()
             nodes = set(X[0] for X in nodes)
-            start.add_nodes_from_ts(nodes, [0, 1,2])
-        elif not isinstance(start, DynamicBayesianNetwork) or not set(start.nodes()) == set(nodes):
+            start.add_nodes_from_ts(nodes, [0, 1])
+            start.add_edge(('A', 0), ('R', 1))
+        elif not isinstance(start, DynamicBayesianNetwork):
             raise ValueError("'start' should be a DynamicBayesianModel "
                              "with the same variables as the data set, or 'None'.")
 
@@ -175,7 +176,7 @@ class HillClimbSearchDBN(StructureEstimator):
                 current_model.remove_edge(X, Y)
                 current_model.add_edge(Y, X)
                 tabu_list = ([best_operation] + tabu_list)[:tabu_length]
-            if counter % 10 == 0:
-                print counter
             counter += 1
+            if counter % 1000 == 0:
+                print counter
         return current_model

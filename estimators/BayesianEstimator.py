@@ -4,7 +4,7 @@ import numpy as np
 
 from pgmpy.estimators import ParameterEstimator
 from pgmpy.factors.discrete import TabularCPD
-from pgmpy.models import BayesianModel
+from pgmpy.models import BayesianModel, DynamicBayesianNetwork
 
 
 class BayesianEstimator(ParameterEstimator):
@@ -13,7 +13,7 @@ class BayesianEstimator(ParameterEstimator):
         Class used to compute parameters for a model using Bayesian Parameter Estimation.
         See `MaximumLikelihoodEstimator` for constructor parameters.
         """
-        if not isinstance(model, BayesianModel):
+        if not isinstance(model, BayesianModel) and not isinstance(model, DynamicBayesianNetwork):
             raise NotImplementedError("Bayesian Parameter Estimation is only implemented for BayesianModel")
 
         super(BayesianEstimator, self).__init__(model, data, **kwargs)
@@ -62,7 +62,13 @@ class BayesianEstimator(ParameterEstimator):
         """
         parameters = []
 
-        for node in self.model.nodes():
+        node_list = self.model.nodes()
+
+        if isinstance(self.model, DynamicBayesianNetwork):
+            node_list = self.model.get_slice_nodes(0)
+            node_list += self.model.get_slice_nodes(1)
+
+        for node in node_list:
             _equivalent_sample_size = equivalent_sample_size[node] if isinstance(equivalent_sample_size, dict) else \
                                       equivalent_sample_size
             _pseudo_counts = pseudo_counts[node] if isinstance(pseudo_counts, dict) else pseudo_counts
