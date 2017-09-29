@@ -179,8 +179,8 @@ class DynamicBayesianNetwork(DirectedGraph):
                 start = (start[0], 0)
                 end = (end[0], 0)
             elif start[1] == end[1] - 1:
-                start = (start[0], 0)
-                end = (end[0], 1)
+                start = (start[0], start[1])
+                end = (end[0], end[1])
             elif start[1] > end[1]:
                 raise NotImplementedError('Edges in backward direction are not allowed.')
             elif start[1] != end[1]:
