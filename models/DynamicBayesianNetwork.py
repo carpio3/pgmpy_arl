@@ -121,6 +121,10 @@ class DynamicBayesianNetwork(DirectedGraph):
         for node in nodes:
             self.add_node(node)
 
+    def add_dynamic_nodes(self, nodes):
+        for node in nodes:
+            self.add_node_ts(node[0], node[1])
+
     def add_nodes_from_ts(self, nodes, slices=0, **attr):
         for t in slices:
             for node in nodes:
