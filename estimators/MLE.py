@@ -75,12 +75,7 @@ class MaximumLikelihoodEstimator(ParameterEstimator):
         """
         parameters = []
 
-        nodes = list()
-        if isinstance(self.model, DynamicBayesianNetwork):
-            for i in range(0, 2):
-                nodes.extend(self.model.get_slice_nodes(time_slice=i))
-        else:
-            nodes = sorted(self.model.nodes())
+        nodes = sorted(self.model.nodes())
 
         for node in sorted(nodes):
             cpd = self.estimate_cpd(node)

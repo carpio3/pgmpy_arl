@@ -60,7 +60,13 @@ class HillClimbSearchDBN(StructureEstimator):
                                   (X[1] == Y[1] or (X[1] + 1) == Y[1]))
 
         for (X, Y) in potential_new_edges:  # (1) add single edge
-            if nx.is_directed_acyclic_graph(nx.DiGraph(list(model.edges()) + [(X, Y)])):
+            if X[1] == Y[1]:
+                X_1 = (X[0], 1 - X[1])
+                Y_1 = (Y[0], 1 - Y[1])
+            else:
+                X_1 = X
+                Y_1 = Y
+            if nx.is_directed_acyclic_graph(nx.DiGraph(list(model.edges()) + [(X, Y)] + [(X_1, Y_1)])):
                 operation = ('+', (X, Y))
                 if operation not in tabu_list:
                     old_parents = model.get_parents(Y)
@@ -80,8 +86,15 @@ class HillClimbSearchDBN(StructureEstimator):
 
         flips = set((X, Y) for (X, Y) in model.edges() if X[1] == Y[1])
         for (X, Y) in flips:  # (3) flip single edge
-            new_edges = list(model.edges()) + [(Y, X)]
+            if X[1] == Y[1]:
+                X_1 = (X[0], 1 - X[1])
+                Y_1 = (Y[0], 1 - Y[1])
+            else:
+                X_1 = X
+                Y_1 = Y
+            new_edges = list(model.edges()) + [(Y, X)] + [(Y_1, X_1)]
             new_edges.remove((X, Y))
+            new_edges.remove((X_1, Y_1))
             if nx.is_directed_acyclic_graph(nx.DiGraph(new_edges)):
                 operation = ('flip', (X, Y))
                 if operation not in tabu_list and ('flip', (Y, X)) not in tabu_list:

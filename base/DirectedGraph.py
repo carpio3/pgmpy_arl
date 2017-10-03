@@ -286,6 +286,7 @@ class DirectedGraph(nx.DiGraph):
         for node in self.nodes():
             moral_graph.add_edges_from(
                 itertools.combinations(self.get_parents(node), 2))
+            moral_graph.add_node(node)
 
         return moral_graph
 

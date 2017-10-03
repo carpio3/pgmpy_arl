@@ -85,8 +85,18 @@ class Inference(object):
 
         elif isinstance(model, DynamicBayesianNetwork):
             self.start_bayesian_model = BayesianModel(model.get_intra_edges(0))
-            self.start_bayesian_model.add_cpds(*model.get_cpds(time_slice=0))
+            start_cpds = model.get_cpds(time_slice=0)
+            for cpd in start_cpds:
+                for variable in cpd.variables:
+                    if variable[1] == 0:
+                        self.start_bayesian_model.add_node(variable)
+            self.start_bayesian_model.add_cpds(*start_cpds)
             cpd_inter = [model.get_cpds(node) for node in set(model.get_interface_nodes(1))]
             self.interface_nodes = set(model.get_interface_nodes(0))
             self.one_and_half_model = BayesianModel(model.get_inter_edges() + model.get_intra_edges(1))
-            self.one_and_half_model.add_cpds(*(model.get_cpds(time_slice=1) + cpd_inter))
+            one_and_half_cpds = model.get_cpds(time_slice=1)
+            for cpd in one_and_half_cpds:
+                for variable in cpd.variables:
+                    if variable[1] == 1:
+                        self.one_and_half_model.add_node(variable)
+            self.one_and_half_model.add_cpds(*(one_and_half_cpds + cpd_inter))

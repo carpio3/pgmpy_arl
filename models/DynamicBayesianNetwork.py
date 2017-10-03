@@ -327,7 +327,7 @@ class DynamicBayesianNetwork(DirectedGraph):
         if not isinstance(time_slice, int) or time_slice < 0:
             raise ValueError("The timeslice should be a positive value greater than or equal to zero")
 
-        return [node for node in self.nodes()]
+        return [node for node in self.nodes() if node[1] == time_slice]
 
     def add_cpds(self, *cpds):
         """
@@ -523,7 +523,7 @@ class DynamicBayesianNetwork(DirectedGraph):
         """
         for cpd in self.cpds:
             temp_var = (cpd.variable[0], 1 - cpd.variable[1])
-            parents = self.get_parents(temp_var)
+            parents = list(self.get_parents(temp_var))
             if not any(x.variable == temp_var for x in self.cpds):
                 if all(x[1] == parents[0][1] for x in parents):
                     if parents:
@@ -684,3 +684,9 @@ class DynamicBayesianNetwork(DirectedGraph):
                                    complete_samples_only=complete_samples_only)
         cpds_list = _estimator.get_parameters(**kwargs)
         self.add_cpds(*cpds_list)
+
+    def remove_edge(self, start, end, **kwargs):
+        super(DynamicBayesianNetwork, self).remove_edge(start, end, **kwargs)
+
+        if start[1] == end[1]:
+            super(DynamicBayesianNetwork, self).remove_edge((start[0], 1 - start[1]), (end[0], 1 - end[1]))
