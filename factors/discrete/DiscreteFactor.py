@@ -609,6 +609,9 @@ class DiscreteFactor(BaseFactor):
 
             phi.values = phi.values * phi1.values
 
+            if np.any(phi.values.shape != phi.cardinality):
+                phi.cardinality = np.array(phi.values.shape)
+
         if not inplace:
             return phi
 

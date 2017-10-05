@@ -6,7 +6,6 @@ import networkx as nx
 from pgmpy.estimators import StructureEstimator, K2Score
 from pgmpy.models import DynamicBayesianNetwork
 
-
 class HillClimbSearchDBN(StructureEstimator):
     def __init__(self, data, scoring_method=None, **kwargs):
         """
@@ -60,55 +59,45 @@ class HillClimbSearchDBN(StructureEstimator):
                                   (X[1] == Y[1] or (X[1] + 1) == Y[1]))
 
         for (X, Y) in potential_new_edges:  # (1) add single edge
-            if X[1] == Y[1]:
-                X_1 = (X[0], 1 - X[1])
-                Y_1 = (Y[0], 1 - Y[1])
-            else:
-                X_1 = X
-                Y_1 = Y
-            if nx.is_directed_acyclic_graph(nx.DiGraph(list(model.edges()) + [(X, Y)] + [(X_1, Y_1)])):
+            X_1, Y_1 = self.get_complementary_edge(X, Y)
+            if nx.is_directed_acyclic_graph(nx.DiGraph(list(model.edges()) + [(X, Y), (X_1, Y_1)])):
                 operation = ('+', (X, Y))
                 if operation not in tabu_list:
-                    old_parents = model.get_parents(Y)
-                    new_parents = list(old_parents) + [X]
-                    if max_indegree is None or len(new_parents) <= max_indegree:
-                        score_delta = local_score(Y, list(new_parents)) - local_score(Y, list(old_parents))
-                        yield(operation, score_delta)
+                    score_X = self.get_score_add(X, Y, model, max_indegree, local_score)
+                    if X_1 != X:
+                        score_X_1 = self.get_score_add(X_1, Y_1, model, max_indegree, local_score)
+                    else:
+                        score_X_1 = 0
+                    if score_X is not None and score_X_1 is not None:
+                        yield(operation, score_X + score_X_1)
 
         for (X, Y) in model.edges():  # (2) remove single edge
+            X_1, Y_1 = self.get_complementary_edge(X, Y)
             operation = ('-', (X, Y))
             if operation not in tabu_list:
-                old_parents = model.get_parents(Y)
-                new_parents = list(old_parents)[:]
-                new_parents.remove(X)
-                score_delta = local_score(Y, list(new_parents)) - local_score(Y, list(old_parents))
-                yield(operation, score_delta)
+                score_X = self.get_score_remove(X, Y, model, local_score)
+                if X != X_1:
+                    score_X_1 = self.get_score_remove(X_1, Y_1, model, local_score)
+                else:
+                    score_X_1 = 0
+                yield(operation, score_X + score_X_1)
 
         flips = set((X, Y) for (X, Y) in model.edges() if X[1] == Y[1])
         for (X, Y) in flips:  # (3) flip single edge
-            if X[1] == Y[1]:
-                X_1 = (X[0], 1 - X[1])
-                Y_1 = (Y[0], 1 - Y[1])
-            else:
-                X_1 = X
-                Y_1 = Y
-            new_edges = list(model.edges()) + [(Y, X)] + [(Y_1, X_1)]
+            X_1, Y_1 = self.get_complementary_edge(X, Y)
+            new_edges = list(model.edges()) + [(Y, X), (Y_1, X_1)]
             new_edges.remove((X, Y))
             new_edges.remove((X_1, Y_1))
             if nx.is_directed_acyclic_graph(nx.DiGraph(new_edges)):
                 operation = ('flip', (X, Y))
                 if operation not in tabu_list and ('flip', (Y, X)) not in tabu_list:
-                    old_X_parents = list(model.get_parents(X))
-                    old_Y_parents = list(model.get_parents(Y))
-                    new_X_parents = old_X_parents + [Y]
-                    new_Y_parents = old_Y_parents[:]
-                    new_Y_parents.remove(X)
-                    if max_indegree is None or len(new_X_parents) <= max_indegree:
-                        score_delta = (local_score(X, new_X_parents) +
-                                       local_score(Y, new_Y_parents) -
-                                       local_score(X, old_X_parents) -
-                                       local_score(Y, old_Y_parents))
-                        yield(operation, score_delta)
+                    score_X = self.get_score_flip(X, Y, model, max_indegree, local_score)
+                    if X_1 != X:
+                        score_X_1 = self.get_score_flip(X_1, Y_1, model, max_indegree, local_score)
+                    else:
+                        score_X_1 = 0
+                    if score_X is not None and score_X_1 is not None:
+                        yield(operation, score_X + score_X_1)
 
     def estimate(self, start=None, tabu_length=0, max_indegree=None):
         """
@@ -193,3 +182,37 @@ class HillClimbSearchDBN(StructureEstimator):
                 print current_model.edges()
                 print best_score_delta
         return current_model
+
+    def get_complementary_edge(self, X, Y):
+        if X[1] == Y[1]:
+            X_1 = (X[0], 1 - X[1])
+            Y_1 = (Y[0], 1 - Y[1])
+        else:
+            X_1 = X
+            Y_1 = Y
+        return X_1, Y_1
+
+    def get_score_add(self, X, Y, model, max_indegree, local_score):
+        old_parents = model.get_parents(Y)
+        new_parents = list(old_parents) + [X]
+        if max_indegree is None or len(new_parents) <= max_indegree:
+            return local_score(Y, list(new_parents)) - local_score(Y, list(old_parents))
+        return None
+
+    def get_score_remove(self, X, Y, model, local_score):
+        old_parents = model.get_parents(Y)
+        new_parents = list(old_parents)[:]
+        new_parents.remove(X)
+        return local_score(Y, list(new_parents)) - local_score(Y, list(old_parents))
+
+    def get_score_flip(self, X, Y, model, max_indegree, local_score):
+        old_X_parents = list(model.get_parents(X))
+        old_Y_parents = list(model.get_parents(Y))
+        new_X_parents = old_X_parents + [Y]
+        new_Y_parents = old_Y_parents[:]
+        new_Y_parents.remove(X)
+        if max_indegree is None or len(new_X_parents) <= max_indegree:
+            return (local_score(X, new_X_parents) +
+                    local_score(Y, new_Y_parents) -
+                    local_score(X, old_X_parents) -
+                    local_score(Y, old_Y_parents))
