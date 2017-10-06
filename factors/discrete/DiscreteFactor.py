@@ -426,6 +426,8 @@ class DiscreteFactor(BaseFactor):
             var_index = phi.variables.index(var)
             slice_[var_index] = state
             var_index_to_del.append(var_index)
+            if phi.cardinality[var_index] <= state:
+                slice_[var_index] = 0
 
         var_index_to_keep = sorted(set(range(len(phi.variables))) - set(var_index_to_del))
         # set difference is not gaurenteed to maintain ordering
