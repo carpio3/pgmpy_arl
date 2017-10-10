@@ -168,14 +168,26 @@ class HillClimbSearchDBN(StructureEstimator):
             elif best_operation[0] == '+':
                 current_model.add_edge(*best_operation[1])
                 tabu_list = ([('-', best_operation[1])] + tabu_list)[:tabu_length]
+                if best_operation[1][0][1] == best_operation[1][1][1]:
+                    comp_operation = ((best_operation[1][0][0], 1 - best_operation[1][0][1]),
+                                      (best_operation[1][1][0], 1 - best_operation[1][1][1]))
+                    tabu_list = ([('-', comp_operation)] + tabu_list)[:tabu_length]
             elif best_operation[0] == '-':
                 current_model.remove_edge(*best_operation[1])
                 tabu_list = ([('+', best_operation[1])] + tabu_list)[:tabu_length]
+                if best_operation[1][0][1] == best_operation[1][1][1]:
+                    comp_operation = ((best_operation[1][0][0], 1 - best_operation[1][0][1]),
+                                      (best_operation[1][1][0], 1 - best_operation[1][1][1]))
+                    tabu_list = ([('+', comp_operation)] + tabu_list)[:tabu_length]
             elif best_operation[0] == 'flip':
                 X, Y = best_operation[1]
                 current_model.remove_edge(X, Y)
                 current_model.add_edge(Y, X)
                 tabu_list = ([best_operation] + tabu_list)[:tabu_length]
+                if best_operation[1][0][1] == best_operation[1][1][1]:
+                    comp_operation = ((best_operation[1][0][0], 1 - best_operation[1][0][1]),
+                                      (best_operation[1][1][0], 1 - best_operation[1][1][1]))
+                    tabu_list = ([('flip', comp_operation)] + tabu_list)[:tabu_length]
             iteration_counter += 1
             if iteration_counter % 100 == 0:
                 print iteration_counter
