@@ -354,7 +354,7 @@ class MarkovModel(UndirectedGraph):
             deletion of the node
             """
             graph_working_copy = nx.Graph(graph_copy.edges())
-            neighbors = graph_working_copy.neighbors(node)
+            neighbors = list(graph_working_copy.neighbors(node))
             graph_working_copy.add_edges_from(itertools.combinations(neighbors, 2))
             clique_dict = nx.cliques_containing_node(graph_working_copy,
                                                      nodes=([node] + neighbors))
