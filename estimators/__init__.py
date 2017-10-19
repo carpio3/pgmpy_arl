@@ -8,9 +8,11 @@ from pgmpy.estimators.BicScore import BicScore
 from pgmpy.estimators.ExhaustiveSearch import ExhaustiveSearch
 from pgmpy.estimators.HillClimbSearch import HillClimbSearch
 from pgmpy.estimators.HillClimbSearchDBN import HillClimbSearchDBN
+from pgmpy.estimators.HillClimbSearchITBN import HillClimbSearchITBN
 from pgmpy.estimators.ConstraintBasedEstimator import ConstraintBasedEstimator
 
 __all__ = ['BaseEstimator',
            'ParameterEstimator', 'MaximumLikelihoodEstimator', 'BayesianEstimator',
-           'StructureEstimator', 'ExhaustiveSearch', 'HillClimbSearch', 'HillClimbSearchDBN', 'ConstraintBasedEstimator'
-           'StructureScore', 'K2Score', 'BdeuScore', 'BicScore']
+           'StructureEstimator', 'ExhaustiveSearch', 'HillClimbSearch', 'HillClimbSearchDBN',
+           'HillClimbSearchITBN', 'ConstraintBasedEstimator', 'StructureScore',
+           'K2Score', 'BdeuScore', 'BicScore']
