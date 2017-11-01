@@ -1,6 +1,7 @@
 from .BayesianModel import BayesianModel
 from .ClusterGraph import ClusterGraph
 from .DynamicBayesianNetwork import DynamicBayesianNetwork
+from .IntervalTemporalBayesianNetwork import IntervalTemporalBayesianNetwork
 from .FactorGraph import FactorGraph
 from .JunctionTree import JunctionTree
 from .MarkovChain import MarkovChain

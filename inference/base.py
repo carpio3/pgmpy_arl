@@ -23,7 +23,8 @@ class Inference(object):
 
     Parameters
     ----------
-    model: pgmpy.models.BayesianModel or pgmpy.models.MarkovModel or pgmpy.models.NoisyOrModel
+    model: pgmpy.models.BayesianModel or pgmpy.models.MarkovModel or pgmpy.models.NoisyOrModel or
+    pgmpy.models.IntervalTemporalBayesianNetwork.py
         model for which to initialize the inference object.
 
     Examples
