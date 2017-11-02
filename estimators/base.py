@@ -253,7 +253,8 @@ class ParameterEstimator(BaseEstimator):
 
         Parameters
         ----------
-        model: pgmpy.models.BayesianModel or pgmpy.models.MarkovModel or pgmpy.models.NoisyOrModel
+        model: pgmpy.models.BayesianModel or pgmpy.models.MarkovModel or
+        pgmpy.models.NoisyOrModel or pgmpy.IntervalTemporalBayesianNetwork
             model for which parameter estimation is to be done
 
         data: pandas DataFrame object
@@ -275,7 +276,8 @@ class ParameterEstimator(BaseEstimator):
 
         if not set(model.nodes()) <= set(data.columns.values) \
                 and not isinstance(model, DynamicBayesianNetwork):
-            raise ValueError("variable names of the model must be identical to column names in data")
+            raise ValueError("variable names of the model must be identical "
+                             "to column names in data")
         self.model = model
 
         super(ParameterEstimator, self).__init__(data, **kwargs)

@@ -4,7 +4,7 @@ import numpy as np
 
 from pgmpy.estimators import ParameterEstimator
 from pgmpy.factors.discrete import TabularCPD
-from pgmpy.models import BayesianModel, DynamicBayesianNetwork
+from pgmpy.models import BayesianModel, DynamicBayesianNetwork, IntervalTemporalBayesianNetwork
 
 
 class MaximumLikelihoodEstimator(ParameterEstimator):
@@ -43,8 +43,10 @@ class MaximumLikelihoodEstimator(ParameterEstimator):
         >>> estimator = MaximumLikelihoodEstimator(model, data)
         """
 
-        if not isinstance(model, BayesianModel) and not isinstance(model, DynamicBayesianNetwork):
-            raise NotImplementedError("Maximum Likelihood Estimate is only implemented for BayesianModel")
+        if not isinstance(model, BayesianModel) and not isinstance(model, DynamicBayesianNetwork)\
+                and not isinstance(model, IntervalTemporalBayesianNetwork):
+            raise NotImplementedError("Maximum Likelihood Estimate is only "
+                                      "implemented for BayesianModel")
 
         super(MaximumLikelihoodEstimator, self).__init__(model, data, **kwargs)
 

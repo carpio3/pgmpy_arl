@@ -32,6 +32,7 @@ class IntervalTemporalBayesianNetwork(BayesianModel):
         super(IntervalTemporalBayesianNetwork, self).__init__(ebunch)
         self.relation_map = None
         self.event_nodes = None
+        self.interval_relation_map = self.load_interval_relation_map()
 
     def add_edge(self, u, v, **kwargs):
         """
@@ -273,21 +274,39 @@ class IntervalTemporalBayesianNetwork(BayesianModel):
         if self.event_nodes is None:
             self.event_nodes = set(
                 [node for node in self.nodes() if not node.startswith(self.temporal_node_marker)])
-        for nodeA in self.event_nodes:
-            for nodeB in self.event_nodes:
+        for node_a in self.event_nodes:
+            for node_b in self.event_nodes:
                 relation_set = set()
-                if not nodeA == nodeB:
+                if not node_a == node_b:
                     for sample in data.itertuples():
-                        relation = self.calculate_relationship(sample, nodeA, nodeB)
+                        relation = self.calculate_relationship(sample, node_a, node_b)
                         relation_set.add(relation)
-                relation_map[(nodeA, nodeB)] = relation_set
+                relation_map[(node_a, node_b)] = sorted(relation_set)
         self.relation_map = relation_map
 
-    def calculate_relationship(self, sample, nodeA, nodeB):
-        startA = getattr(sample, nodeA + self.start_time_marker)
-        endA = getattr(sample, nodeA + self.end_time_marker)
-        startB = getattr(sample, nodeB + self.start_time_marker)
-        endB = getattr(sample, nodeB + self.end_time_marker)
-        temp_distance = (np.sign(startB - startA), np.sign(endB - endA),
-                         np.sign(startB - endA), np.sign(endB - startA))
-        return 'eq'
+    def calculate_relationship(self, sample, node_a, node_b):
+        start_a = getattr(sample, node_a + self.start_time_marker)
+        end_a = getattr(sample, node_a + self.end_time_marker)
+        start_b = getattr(sample, node_b + self.start_time_marker)
+        end_b = getattr(sample, node_b + self.end_time_marker)
+        temp_distance = (np.sign(start_b - start_a), np.sign(end_b - end_a),
+                         np.sign(start_b - end_a), np.sign(end_b - start_a))
+        return self.interval_relation_map[temp_distance]
+
+    @staticmethod
+    def load_interval_relation_map():
+        interval_relation_map = dict()
+        interval_relation_map[(-1., -1., -1., -1.)] = 'b'
+        interval_relation_map[(1., 1., 1., 1.)] = 'bi'
+        interval_relation_map[(1., -1., -1., 1.)] = 'd'
+        interval_relation_map[(-1., 1., -1., 1.)] = 'di'
+        interval_relation_map[(-1., -1., -1., 1.)] = 'o'
+        interval_relation_map[(1., 1., -1., 1.)] = 'oi'
+        interval_relation_map[(-1., -1., -1., 0.)] = 'm'
+        interval_relation_map[(1., 1., 0., 1.)] = 'mi'
+        interval_relation_map[(0., -1., -1., 1.)] = 's'
+        interval_relation_map[(0., 1., -1., 1.)] = 'si'
+        interval_relation_map[(1., 0., -1., 1.)] = 'f'
+        interval_relation_map[(-1., 0., -1., 1.)] = 'fi'
+        interval_relation_map[(0., 0., -1., 1.)] = 'eq'
+        return interval_relation_map
