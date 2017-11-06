@@ -28,6 +28,21 @@ class IntervalTemporalBayesianNetwork(BayesianModel):
     start_time_marker = "_s"
     end_time_marker = "_e"
 
+    # Allen's Temporal Relations
+    BEFORE = 1
+    BEFORE_INV = 2
+    MEETS = 3
+    MEETS_INV = 4
+    OVERLAPS = 5
+    OVERLAPS_INV = 6
+    DURING = 7
+    DURING_INV = 8
+    STARTS = 9
+    STARTS_INV = 10
+    FINISHES = 11
+    FINISHES_INV = 12
+    EQUAL = 13
+
     def __init__(self, ebunch=None):
         super(IntervalTemporalBayesianNetwork, self).__init__(ebunch)
         self.relation_map = None
@@ -296,17 +311,17 @@ class IntervalTemporalBayesianNetwork(BayesianModel):
     @staticmethod
     def load_interval_relation_map():
         interval_relation_map = dict()
-        interval_relation_map[(-1., -1., -1., -1.)] = 'b'
-        interval_relation_map[(1., 1., 1., 1.)] = 'bi'
-        interval_relation_map[(1., -1., -1., 1.)] = 'd'
-        interval_relation_map[(-1., 1., -1., 1.)] = 'di'
-        interval_relation_map[(-1., -1., -1., 1.)] = 'o'
-        interval_relation_map[(1., 1., -1., 1.)] = 'oi'
-        interval_relation_map[(-1., -1., -1., 0.)] = 'm'
-        interval_relation_map[(1., 1., 0., 1.)] = 'mi'
-        interval_relation_map[(0., -1., -1., 1.)] = 's'
-        interval_relation_map[(0., 1., -1., 1.)] = 'si'
-        interval_relation_map[(1., 0., -1., 1.)] = 'f'
-        interval_relation_map[(-1., 0., -1., 1.)] = 'fi'
-        interval_relation_map[(0., 0., -1., 1.)] = 'eq'
+        interval_relation_map[(-1., -1., -1., -1.)] = IntervalTemporalBayesianNetwork.BEFORE
+        interval_relation_map[(1., 1., 1., 1.)] = IntervalTemporalBayesianNetwork.BEFORE_INV
+        interval_relation_map[(1., -1., -1., 1.)] = IntervalTemporalBayesianNetwork.DURING
+        interval_relation_map[(-1., 1., -1., 1.)] = IntervalTemporalBayesianNetwork.DURING_INV
+        interval_relation_map[(-1., -1., -1., 1.)] = IntervalTemporalBayesianNetwork.OVERLAPS
+        interval_relation_map[(1., 1., -1., 1.)] = IntervalTemporalBayesianNetwork.OVERLAPS_INV
+        interval_relation_map[(-1., -1., -1., 0.)] = IntervalTemporalBayesianNetwork.MEETS
+        interval_relation_map[(1., 1., 0., 1.)] = IntervalTemporalBayesianNetwork.MEETS_INV
+        interval_relation_map[(0., -1., -1., 1.)] = IntervalTemporalBayesianNetwork.STARTS
+        interval_relation_map[(0., 1., -1., 1.)] = IntervalTemporalBayesianNetwork.STARTS_INV
+        interval_relation_map[(1., 0., -1., 1.)] = IntervalTemporalBayesianNetwork.FINISHES
+        interval_relation_map[(-1., 0., -1., 1.)] = IntervalTemporalBayesianNetwork.FINISHES_INV
+        interval_relation_map[(0., 0., -1., 1.)] = IntervalTemporalBayesianNetwork.EQUAL
         return interval_relation_map
