@@ -3,14 +3,14 @@ from itertools import permutations
 
 import networkx as nx
 
-from pgmpy.estimators import StructureEstimator, K2Score
-from pgmpy.models import BayesianModel
+from pgmpy.estimators import HillClimbSearch
+from pgmpy.models import IntervalTemporalBayesianNetwork
 
 
-class HillClimbSearchITBN(StructureEstimator):
-    def __init__(self, data, scoring_method=None, **kwargs):
+class HillClimbSearchITBN(HillClimbSearch):
+    def __init__(self, data, **kwargs):
         """
-        Class for heuristic hill climb searches for BayesianModels, to learn
+        Class for heuristic hill climb searches for ITBN models, to learn
         network structure from data. `estimate` attempts to find a model with optimal score.
         Adapted to work with the ITBN model proposed by Zhang, et al.
 
@@ -36,12 +36,7 @@ class HillClimbSearchITBN(StructureEstimator):
             every row where neither the variable nor its parents are `np.NaN` is used.
             This sets the behavior of the `state_count`-method.
         """
-        if scoring_method is not None:
-            self.scoring_method = scoring_method
-        else:
-            self.scoring_method = K2Score(data, **kwargs)
-
-        super(HillClimbSearch, self).__init__(data, **kwargs)
+        super(HillClimbSearchITBN, self).__init__(data, **kwargs)
 
     def _legal_operations(self, model, tabu_list=[], max_indegree=None):
         """Generates a list of legal (= not in tabu_list) graph modifications
@@ -55,13 +50,14 @@ class HillClimbSearchITBN(StructureEstimator):
         nodes = self.state_names.keys()
         potential_new_edges = (set(permutations(nodes, 2)) -
                                set(model.edges()) -
-                               set([(Y, X) for (X, Y) in model.edges()]))
+                               set([(Y, X) for (X, Y) in model.edges()]) -
+                               set([X for X, Y in model.relation_map.items() if len(Y) == 0]))
 
         for (X, Y) in potential_new_edges:  # (1) add single edge
-            if nx.is_directed_acyclic_graph(nx.DiGraph(model.edges() + [(X, Y)])):
+            if nx.is_directed_acyclic_graph(nx.DiGraph(list(model.edges()) + [(X, Y)])):
                 operation = ('+', (X, Y))
                 if operation not in tabu_list:
-                    old_parents = model.get_parents(Y)
+                    old_parents = list(model.get_parents(Y))
                     new_parents = old_parents + [X]
                     if max_indegree is None or len(new_parents) <= max_indegree:
                         score_delta = local_score(Y, new_parents) - local_score(Y, old_parents)
@@ -70,20 +66,20 @@ class HillClimbSearchITBN(StructureEstimator):
         for (X, Y) in model.edges():  # (2) remove single edge
             operation = ('-', (X, Y))
             if operation not in tabu_list:
-                old_parents = model.get_parents(Y)
+                old_parents = list(model.get_parents(Y))
                 new_parents = old_parents[:]
                 new_parents.remove(X)
                 score_delta = local_score(Y, new_parents) - local_score(Y, old_parents)
                 yield(operation, score_delta)
 
         for (X, Y) in model.edges():  # (3) flip single edge
-            new_edges = model.edges() + [(Y, X)]
+            new_edges = list(model.edges()) + [(Y, X)]
             new_edges.remove((X, Y))
             if nx.is_directed_acyclic_graph(nx.DiGraph(new_edges)):
                 operation = ('flip', (X, Y))
                 if operation not in tabu_list and ('flip', (Y, X)) not in tabu_list:
-                    old_X_parents = model.get_parents(X)
-                    old_Y_parents = model.get_parents(Y)
+                    old_X_parents = list(model.get_parents(X))
+                    old_Y_parents = list(model.get_parents(Y))
                     new_X_parents = old_X_parents + [Y]
                     new_Y_parents = old_Y_parents[:]
                     new_Y_parents.remove(X)
@@ -104,7 +100,8 @@ class HillClimbSearchITBN(StructureEstimator):
         Parameters
         ----------
         start: BayesianModel instance
-            The starting point for the local search. By default a completely disconnected network is used.
+            The starting point for the local search. By default a completely disconnected
+            network is used.
         tabu_length: int
             If provided, the last `tabu_length` graph modifications cannot be reversed
             during the search procedure. This serves to enforce a wider exploration
@@ -140,10 +137,12 @@ class HillClimbSearchITBN(StructureEstimator):
         epsilon = 1e-8
         nodes = self.state_names.keys()
         if start is None:
-            start = BayesianModel()
+            start = IntervalTemporalBayesianNetwork()
             start.add_nodes_from(nodes)
-        elif not isinstance(start, BayesianModel) or not set(start.nodes()) == set(nodes):
-            raise ValueError("'start' should be a BayesianModel with the same variables as the data set, or 'None'.")
+        elif (not isinstance(start, IntervalTemporalBayesianNetwork) or
+              not set(start.nodes()) == set(nodes)):
+            raise ValueError("'start' should be a IntervalTemporalBayesianNetwork with the same "
+                             "variables as the data set, or 'None'.")
 
         tabu_list = []
         current_model = start
@@ -152,7 +151,8 @@ class HillClimbSearchITBN(StructureEstimator):
             best_score_delta = 0
             best_operation = None
 
-            for operation, score_delta in self._legal_operations(current_model, tabu_list, max_indegree):
+            for operation, score_delta in self._legal_operations(current_model,
+                                                                 tabu_list, max_indegree):
                 if score_delta > best_score_delta:
                     best_operation = operation
                     best_score_delta = score_delta

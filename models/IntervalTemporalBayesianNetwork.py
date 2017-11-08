@@ -294,10 +294,12 @@ class IntervalTemporalBayesianNetwork(BayesianModel):
                 relation_set = set()
                 if not node_a == node_b:
                     for sample in data.itertuples():
-                        relation = self.calculate_relationship(sample, node_a, node_b)
-                        relation_set.add(relation)
-                        data.at[getattr(sample, 'Index'), self.temporal_node_marker +
-                                node_a + "_" + node_b] = relation
+                        if (getattr(sample, node_a + self.start_time_marker) >= 0 and
+                                getattr(sample, node_b + self.start_time_marker) >= 0):
+                            relation = self.calculate_relationship(sample, node_a, node_b)
+                            relation_set.add(relation)
+                            data.at[getattr(sample, 'Index'), self.temporal_node_marker +
+                                    node_a + "_" + node_b] = relation
                 relation_map[(node_a, node_b)] = sorted(relation_set)
         self.relation_map = relation_map
 
@@ -329,11 +331,11 @@ class IntervalTemporalBayesianNetwork(BayesianModel):
         return interval_relation_map
 
     def add_temporal_nodes(self):
-        for key, value in self.relation_map.items():
-            if len(value) > 0:
-                node = sorted(key)
-                temporal_node = self.temporal_node_marker + node[0] + "_" + node[1]
+        for edge in self.edges():
+            relation_set = self.relation_map[edge]
+            if len(relation_set) > 0:
+                temporal_node = self.temporal_node_marker + edge[0] + "_" + edge[1]
                 if temporal_node not in self.nodes():
                     self.add_node(temporal_node)
-                    self.add_edge(key[0], temporal_node)
-                    self.add_edge(key[1], temporal_node)
+                    self.add_edge(edge[0], temporal_node)
+                    self.add_edge(edge[1], temporal_node)
