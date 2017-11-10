@@ -5,6 +5,7 @@ from collections import defaultdict
 import networkx as nx
 import pandas as pd
 import numpy as np
+import os
 
 from pgmpy.models import BayesianModel
 from pgmpy.models.MarkovModel import MarkovModel
@@ -24,7 +25,7 @@ class IntervalTemporalBayesianNetwork(BayesianModel):
 
     Edges are represented as links between nodes.
     """
-    temporal_node_marker = "t_"
+    temporal_node_marker = "tm_"
     start_time_marker = "_s"
     end_time_marker = "_e"
 
@@ -42,6 +43,13 @@ class IntervalTemporalBayesianNetwork(BayesianModel):
     FINISHES = 11
     FINISHES_INV = 12
     EQUAL = 13
+    AIG_MAP = {1: 'b', 2: 'bi',
+               3: 'm', 4: 'mi',
+               5: 'o', 6: 'oi',
+               7: 'd', 8: 'di',
+               9: 's', 10: 'si',
+               11: 'f', 12: 'fi',
+               13: 'e'}
 
     def __init__(self, ebunch=None):
         super(IntervalTemporalBayesianNetwork, self).__init__(ebunch)
@@ -331,7 +339,8 @@ class IntervalTemporalBayesianNetwork(BayesianModel):
         return interval_relation_map
 
     def add_temporal_nodes(self):
-        for edge in self.edges():
+        current_edges = list(self.edges())
+        for edge in current_edges:
             relation_set = self.relation_map[edge]
             if len(relation_set) > 0:
                 temporal_node = self.temporal_node_marker + edge[0] + "_" + edge[1]
@@ -339,3 +348,23 @@ class IntervalTemporalBayesianNetwork(BayesianModel):
                     self.add_node(temporal_node)
                     self.add_edge(edge[0], temporal_node)
                     self.add_edge(edge[1], temporal_node)
+
+    def draw_to_file(self, file_path):
+        drawn_edges = set()
+        output = "strict digraph {\n"
+        for event in self.event_nodes:
+            output += event + " [weight=None]\n"
+        for edge in self.edges():
+            if (edge[1].startswith(self.temporal_node_marker) and
+                    edge[1] not in drawn_edges):
+                drawn_edges.add(edge[1])
+                edge_nodes = edge[1].replace(self.temporal_node_marker, "").split("_")
+                relations_str = ",".join(self.AIG_MAP[r] for r in
+                                         self.relation_map[(edge_nodes[0], edge_nodes[1])])
+                output += edge_nodes[0] + " -> " + edge_nodes[1] + " [weight=None, label=\" " + \
+                          relations_str + " \"]\n"
+        output += "}"
+        dot_file = file_path.replace('.png', '.dot')
+        with open(dot_file, "w") as output_file:
+            output_file.write(output)
+        os.system('dot ' + dot_file + ' -Tpng -o ' + file_path)
