@@ -10,7 +10,6 @@ import os
 from pgmpy.models import BayesianModel
 from pgmpy.models.MarkovModel import MarkovModel
 
-
 class IntervalTemporalBayesianNetwork(BayesianModel):
     """
     Base class for interval temporal bayesian network model. (ITBN)
@@ -320,22 +319,21 @@ class IntervalTemporalBayesianNetwork(BayesianModel):
                          np.sign(start_b - end_a), np.sign(end_b - start_a))
         return self.interval_relation_map[temp_distance]
 
-    @staticmethod
-    def load_interval_relation_map():
+    def load_interval_relation_map(self):
         interval_relation_map = dict()
-        interval_relation_map[(-1., -1., -1., -1.)] = IntervalTemporalBayesianNetwork.BEFORE
-        interval_relation_map[(1., 1., 1., 1.)] = IntervalTemporalBayesianNetwork.BEFORE_INV
-        interval_relation_map[(1., -1., -1., 1.)] = IntervalTemporalBayesianNetwork.DURING
-        interval_relation_map[(-1., 1., -1., 1.)] = IntervalTemporalBayesianNetwork.DURING_INV
-        interval_relation_map[(-1., -1., -1., 1.)] = IntervalTemporalBayesianNetwork.OVERLAPS
-        interval_relation_map[(1., 1., -1., 1.)] = IntervalTemporalBayesianNetwork.OVERLAPS_INV
-        interval_relation_map[(-1., -1., -1., 0.)] = IntervalTemporalBayesianNetwork.MEETS
-        interval_relation_map[(1., 1., 0., 1.)] = IntervalTemporalBayesianNetwork.MEETS_INV
-        interval_relation_map[(0., -1., -1., 1.)] = IntervalTemporalBayesianNetwork.STARTS
-        interval_relation_map[(0., 1., -1., 1.)] = IntervalTemporalBayesianNetwork.STARTS_INV
-        interval_relation_map[(1., 0., -1., 1.)] = IntervalTemporalBayesianNetwork.FINISHES
-        interval_relation_map[(-1., 0., -1., 1.)] = IntervalTemporalBayesianNetwork.FINISHES_INV
-        interval_relation_map[(0., 0., -1., 1.)] = IntervalTemporalBayesianNetwork.EQUAL
+        interval_relation_map[(-1., -1., -1., -1.)] = self.BEFORE
+        interval_relation_map[(1., 1., 1., 1.)] = self.BEFORE_INV
+        interval_relation_map[(1., -1., -1., 1.)] = self.DURING
+        interval_relation_map[(-1., 1., -1., 1.)] = self.DURING_INV
+        interval_relation_map[(-1., -1., -1., 1.)] = self.OVERLAPS
+        interval_relation_map[(1., 1., -1., 1.)] = self.OVERLAPS_INV
+        interval_relation_map[(-1., -1., -1., 0.)] = self.MEETS
+        interval_relation_map[(1., 1., 0., 1.)] = self.MEETS_INV
+        interval_relation_map[(0., -1., -1., 1.)] = self.STARTS
+        interval_relation_map[(0., 1., -1., 1.)] = self.STARTS_INV
+        interval_relation_map[(1., 0., -1., 1.)] = self.FINISHES
+        interval_relation_map[(-1., 0., -1., 1.)] = self.FINISHES_INV
+        interval_relation_map[(0., 0., -1., 1.)] = self.EQUAL
         return interval_relation_map
 
     def add_temporal_nodes(self):
@@ -368,3 +366,406 @@ class IntervalTemporalBayesianNetwork(BayesianModel):
         with open(dot_file, "w") as output_file:
             output_file.write(output)
         os.system('dot ' + dot_file + ' -Tpng -o ' + file_path)
+
+    def load_interval_relation_transitivity_table(self):
+        ir_transitivity_table = dict()
+        # ########################################################################    BEFORE
+        ir_transitivity_table[(self.BEFORE, self.BEFORE)] = [self.BEFORE]
+        ir_transitivity_table[(self.BEFORE, self.BEFORE_INV)] = None
+        ir_transitivity_table[(self.BEFORE, self.DURING)] = [self.BEFORE,
+                                                             self.OVERLAPS,
+                                                             self.MEETS,
+                                                             self.DURING,
+                                                             self.STARTS]
+        ir_transitivity_table[(self.BEFORE, self.DURING_INV)] = [self.BEFORE]
+        ir_transitivity_table[(self.BEFORE, self.OVERLAPS)] = [self.BEFORE]
+        ir_transitivity_table[(self.BEFORE, self.OVERLAPS_INV)] = [self.BEFORE,
+                                                                   self.OVERLAPS,
+                                                                   self.MEETS,
+                                                                   self.DURING,
+                                                                   self.STARTS]
+        ir_transitivity_table[(self.BEFORE, self.MEETS)] = [self.BEFORE]
+        ir_transitivity_table[(self.BEFORE, self.MEETS_INV)] = [self.BEFORE,
+                                                                self.OVERLAPS,
+                                                                self.MEETS,
+                                                                self.DURING,
+                                                                self.STARTS]
+        ir_transitivity_table[(self.BEFORE, self.STARTS)] = [self.BEFORE]
+        ir_transitivity_table[(self.BEFORE, self.STARTS_INV)] = [self.BEFORE]
+        ir_transitivity_table[(self.BEFORE, self.FINISHES)] = [self.BEFORE,
+                                                               self.OVERLAPS,
+                                                               self.MEETS,
+                                                               self.DURING,
+                                                               self.STARTS]
+        ir_transitivity_table[(self.BEFORE, self.FINISHES_INV)] = [self.BEFORE]
+        ir_transitivity_table[(self.BEFORE, self.EQUAL)] = [self.BEFORE]
+
+        # ########################################################################    BEFORE_INV
+        ir_transitivity_table[(self.BEFORE_INV, self.BEFORE)] = None
+        ir_transitivity_table[(self.BEFORE_INV, self.BEFORE_INV)] = [self.BEFORE_INV]
+        ir_transitivity_table[(self.BEFORE_INV, self.DURING)] = [self.BEFORE_INV,
+                                                                 self.OVERLAPS_INV,
+                                                                 self.MEETS_INV,
+                                                                 self.DURING,
+                                                                 self.FINISHES]
+        ir_transitivity_table[(self.BEFORE_INV, self.DURING_INV)] = [self.BEFORE_INV]
+        ir_transitivity_table[(self.BEFORE_INV, self.OVERLAPS)] = [self.BEFORE_INV,
+                                                                   self.OVERLAPS_INV,
+                                                                   self.MEETS_INV,
+                                                                   self.DURING,
+                                                                   self.FINISHES]
+        ir_transitivity_table[(self.BEFORE_INV, self.OVERLAPS_INV)] = [self.BEFORE_INV]
+        ir_transitivity_table[(self.BEFORE_INV, self.MEETS)] = [self.BEFORE_INV,
+                                                                self.OVERLAPS_INV,
+                                                                self.MEETS_INV,
+                                                                self.DURING,
+                                                                self.FINISHES]
+        ir_transitivity_table[(self.BEFORE_INV, self.MEETS_INV)] = [self.BEFORE_INV]
+        ir_transitivity_table[(self.BEFORE_INV, self.STARTS)] = [self.BEFORE_INV,
+                                                                 self.OVERLAPS_INV,
+                                                                 self.MEETS_INV,
+                                                                 self.DURING,
+                                                                 self.FINISHES]
+        ir_transitivity_table[(self.BEFORE_INV, self.STARTS_INV)] = [self.BEFORE_INV]
+        ir_transitivity_table[(self.BEFORE_INV, self.FINISHES)] = [self.BEFORE_INV]
+        ir_transitivity_table[(self.BEFORE_INV, self.FINISHES_INV)] = [self.BEFORE_INV]
+        ir_transitivity_table[(self.BEFORE_INV, self.EQUAL)] = [self.BEFORE_INV]
+
+        # ########################################################################    DURING
+        ir_transitivity_table[(self.DURING, self.BEFORE)] = [self.BEFORE]
+        ir_transitivity_table[(self.DURING, self.BEFORE_INV)] = [self.BEFORE_INV]
+        ir_transitivity_table[(self.DURING, self.DURING)] = [self.DURING]
+        ir_transitivity_table[(self.DURING, self.DURING_INV)] = None
+        ir_transitivity_table[(self.DURING, self.OVERLAPS)] = [self.BEFORE,
+                                                               self.OVERLAPS,
+                                                               self.MEETS,
+                                                               self.DURING,
+                                                               self.STARTS]
+        ir_transitivity_table[(self.DURING, self.OVERLAPS_INV)] = [self.BEFORE_INV,
+                                                                   self.OVERLAPS_INV,
+                                                                   self.MEETS_INV,
+                                                                   self.DURING,
+                                                                   self.FINISHES]
+        ir_transitivity_table[(self.DURING, self.MEETS)] = [self.BEFORE]
+        ir_transitivity_table[(self.DURING, self.MEETS_INV)] = [self.BEFORE_INV]
+        ir_transitivity_table[(self.DURING, self.STARTS)] = [self.DURING]
+        ir_transitivity_table[(self.DURING, self.STARTS_INV)] = [self.BEFORE_INV,
+                                                                 self.OVERLAPS_INV,
+                                                                 self.MEETS_INV,
+                                                                 self.DURING,
+                                                                 self.FINISHES]
+        ir_transitivity_table[(self.DURING, self.FINISHES)] = [self.DURING]
+        ir_transitivity_table[(self.DURING, self.FINISHES_INV)] = [self.BEFORE,
+                                                                   self.OVERLAPS,
+                                                                   self.MEETS,
+                                                                   self.DURING,
+                                                                   self.STARTS]
+        ir_transitivity_table[(self.DURING, self.EQUAL)] = [self.DURING]
+
+        # ########################################################################    DURING_INV
+        ir_transitivity_table[(self.DURING_INV, self.BEFORE)] = [self.BEFORE,
+                                                                 self.OVERLAPS,
+                                                                 self.MEETS,
+                                                                 self.DURING_INV,
+                                                                 self.FINISHES_INV]
+        ir_transitivity_table[(self.DURING_INV, self.BEFORE_INV)] = [self.BEFORE_INV,
+                                                                     self.OVERLAPS_INV,
+                                                                     self.MEETS_INV,
+                                                                     self.DURING_INV,
+                                                                     self.STARTS_INV]
+        ir_transitivity_table[(self.DURING_INV, self.DURING)] = [self.OVERLAPS,
+                                                                 self.OVERLAPS_INV,
+                                                                 self.DURING,
+                                                                 self.STARTS,
+                                                                 self.FINISHES,
+                                                                 self.DURING_INV,
+                                                                 self.STARTS_INV,
+                                                                 self.FINISHES_INV,
+                                                                 self.EQUAL]
+        ir_transitivity_table[(self.DURING_INV, self.DURING_INV)] = [self.DURING_INV]
+        ir_transitivity_table[(self.DURING_INV, self.OVERLAPS)] = [self.OVERLAPS,
+                                                                   self.DURING_INV,
+                                                                   self.FINISHES_INV]
+        ir_transitivity_table[(self.DURING_INV, self.OVERLAPS_INV)] = [self.OVERLAPS_INV,
+                                                                       self.DURING_INV,
+                                                                       self.STARTS_INV]
+        ir_transitivity_table[(self.DURING_INV, self.MEETS)] = [self.OVERLAPS,
+                                                                self.DURING_INV,
+                                                                self.FINISHES_INV]
+        ir_transitivity_table[(self.DURING_INV, self.MEETS_INV)] = [self.OVERLAPS_INV,
+                                                                    self.DURING_INV,
+                                                                    self.STARTS_INV]
+        ir_transitivity_table[(self.DURING_INV, self.STARTS)] = [self.DURING_INV,
+                                                                 self.FINISHES_INV,
+                                                                 self.OVERLAPS]
+        ir_transitivity_table[(self.DURING_INV, self.STARTS_INV)] = [self.DURING_INV]
+        ir_transitivity_table[(self.DURING_INV, self.FINISHES)] = [self.DURING_INV,
+                                                                   self.STARTS_INV,
+                                                                   self.OVERLAPS_INV]
+        ir_transitivity_table[(self.DURING_INV, self.FINISHES_INV)] = [self.DURING_INV]
+        ir_transitivity_table[(self.DURING_INV, self.EQUAL)] = [self.DURING_INV]
+
+        # ########################################################################    OVERLAPS
+        ir_transitivity_table[(self.OVERLAPS, self.BEFORE)] = [self.BEFORE]
+        ir_transitivity_table[(self.OVERLAPS, self.BEFORE_INV)] = [self.BEFORE_INV,
+                                                                   self.OVERLAPS_INV,
+                                                                   self.DURING_INV,
+                                                                   self.MEETS_INV,
+                                                                   self.STARTS_INV]
+        ir_transitivity_table[(self.OVERLAPS, self.DURING)] = [self.OVERLAPS,
+                                                               self.DURING,
+                                                               self.STARTS]
+        ir_transitivity_table[(self.OVERLAPS, self.DURING_INV)] = [self.BEFORE,
+                                                                   self.OVERLAPS,
+                                                                   self.MEETS,
+                                                                   self.DURING_INV,
+                                                                   self.FINISHES_INV]
+        ir_transitivity_table[(self.OVERLAPS, self.OVERLAPS)] = [self.BEFORE,
+                                                                 self.OVERLAPS,
+                                                                 self.MEETS]
+        ir_transitivity_table[(self.OVERLAPS, self.OVERLAPS_INV)] = [self.OVERLAPS,
+                                                                     self.OVERLAPS_INV,
+                                                                     self.DURING,
+                                                                     self.STARTS,
+                                                                     self.FINISHES,
+                                                                     self.DURING_INV,
+                                                                     self.STARTS_INV,
+                                                                     self.FINISHES_INV,
+                                                                     self.EQUAL]
+        ir_transitivity_table[(self.OVERLAPS, self.MEETS)] = [self.BEFORE]
+        ir_transitivity_table[(self.OVERLAPS, self.MEETS_INV)] = [self.OVERLAPS_INV,
+                                                                  self.DURING_INV,
+                                                                  self.STARTS_INV]
+        ir_transitivity_table[(self.OVERLAPS, self.STARTS)] = [self.OVERLAPS]
+        ir_transitivity_table[(self.OVERLAPS, self.STARTS_INV)] = [self.DURING_INV,
+                                                                   self.FINISHES_INV,
+                                                                   self.OVERLAPS]
+        ir_transitivity_table[(self.OVERLAPS, self.FINISHES)] = [self.DURING,
+                                                                 self.STARTS,
+                                                                 self.OVERLAPS]
+        ir_transitivity_table[(self.OVERLAPS, self.FINISHES_INV)] = [self.BEFORE,
+                                                                     self.OVERLAPS,
+                                                                     self.MEETS]
+        ir_transitivity_table[(self.OVERLAPS, self.EQUAL)] = [self.OVERLAPS]
+
+        # ########################################################################    OVERLAPS_INV
+        ir_transitivity_table[(self.OVERLAPS_INV, self.BEFORE)] = [self.BEFORE,
+                                                                   self.OVERLAPS,
+                                                                   self.MEETS,
+                                                                   self.DURING_INV,
+                                                                   self.FINISHES_INV]
+        ir_transitivity_table[(self.OVERLAPS_INV, self.BEFORE_INV)] = [self.BEFORE_INV]
+        ir_transitivity_table[(self.OVERLAPS_INV, self.DURING)] = [self.OVERLAPS_INV,
+                                                                   self.DURING,
+                                                                   self.FINISHES]
+        ir_transitivity_table[(self.OVERLAPS_INV, self.DURING_INV)] = [self.BEFORE_INV,
+                                                                       self.OVERLAPS_INV,
+                                                                       self.MEETS_INV,
+                                                                       self.DURING_INV,
+                                                                       self.STARTS_INV]
+        ir_transitivity_table[(self.OVERLAPS_INV, self.OVERLAPS)] = [self.OVERLAPS,
+                                                                     self.OVERLAPS_INV,
+                                                                     self.DURING,
+                                                                     self.STARTS,
+                                                                     self.FINISHES,
+                                                                     self.DURING_INV,
+                                                                     self.STARTS_INV,
+                                                                     self.FINISHES_INV,
+                                                                     self.EQUAL]
+        ir_transitivity_table[(self.OVERLAPS_INV, self.OVERLAPS_INV)] = [self.BEFORE_INV,
+                                                                         self.OVERLAPS_INV,
+                                                                         self.MEETS_INV]
+        ir_transitivity_table[(self.OVERLAPS_INV, self.MEETS)] = [self.OVERLAPS,
+                                                                  self.DURING_INV,
+                                                                  self.FINISHES_INV]
+        ir_transitivity_table[(self.OVERLAPS_INV, self.MEETS_INV)] = [self.BEFORE_INV]
+        ir_transitivity_table[(self.OVERLAPS_INV, self.STARTS)] = [self.OVERLAPS_INV,
+                                                                   self.DURING,
+                                                                   self.FINISHES]
+        ir_transitivity_table[(self.OVERLAPS_INV, self.STARTS_INV)] = [self.OVERLAPS_INV,
+                                                                       self.BEFORE_INV,
+                                                                       self.MEETS_INV]
+        ir_transitivity_table[(self.OVERLAPS_INV, self.FINISHES)] = [self.OVERLAPS_INV]
+        ir_transitivity_table[(self.OVERLAPS_INV, self.FINISHES_INV)] = [self.OVERLAPS_INV,
+                                                                         self.DURING_INV,
+                                                                         self.STARTS_INV]
+        ir_transitivity_table[(self.OVERLAPS_INV, self.EQUAL)] = [self.OVERLAPS_INV]
+
+        # ########################################################################    MEETS
+        ir_transitivity_table[(self.MEETS, self.BEFORE)] = [self.BEFORE]
+        ir_transitivity_table[(self.MEETS, self.BEFORE_INV)] = [self.BEFORE_INV,
+                                                                self.OVERLAPS_INV,
+                                                                self.MEETS_INV,
+                                                                self.DURING_INV,
+                                                                self.STARTS_INV]
+        ir_transitivity_table[(self.MEETS, self.DURING)] = [self.OVERLAPS,
+                                                            self.DURING,
+                                                            self.STARTS]
+        ir_transitivity_table[(self.MEETS, self.DURING_INV)] = [self.BEFORE]
+        ir_transitivity_table[(self.MEETS, self.OVERLAPS)] = [self.BEFORE]
+        ir_transitivity_table[(self.MEETS, self.OVERLAPS_INV)] = [self.OVERLAPS,
+                                                                  self.DURING,
+                                                                  self.STARTS]
+        ir_transitivity_table[(self.MEETS, self.MEETS)] = [self.BEFORE]
+        ir_transitivity_table[(self.MEETS, self.MEETS_INV)] = [self.FINISHES,
+                                                               self.FINISHES_INV,
+                                                               self.EQUAL]
+        ir_transitivity_table[(self.MEETS, self.STARTS)] = [self.MEETS]
+        ir_transitivity_table[(self.MEETS, self.STARTS_INV)] = [self.MEETS]
+        ir_transitivity_table[(self.MEETS, self.FINISHES)] = [self.DURING,
+                                                              self.STARTS,
+                                                              self.OVERLAPS]
+        ir_transitivity_table[(self.MEETS, self.FINISHES_INV)] = [self.BEFORE]
+        ir_transitivity_table[(self.MEETS, self.EQUAL)] = [self.MEETS]
+
+        # ########################################################################    MEETS_INV
+        ir_transitivity_table[(self.MEETS_INV, self.BEFORE)] = [self.BEFORE,
+                                                                self.OVERLAPS,
+                                                                self.MEETS,
+                                                                self.DURING_INV,
+                                                                self.FINISHES_INV]
+        ir_transitivity_table[(self.MEETS_INV, self.BEFORE_INV)] = [self.BEFORE_INV]
+        ir_transitivity_table[(self.MEETS_INV, self.DURING)] = [self.OVERLAPS_INV,
+                                                                self.DURING,
+                                                                self.FINISHES]
+        ir_transitivity_table[(self.MEETS_INV, self.DURING_INV)] = [self.BEFORE_INV]
+        ir_transitivity_table[(self.MEETS_INV, self.OVERLAPS)] = [self.OVERLAPS_INV,
+                                                                  self.DURING,
+                                                                  self.FINISHES]
+        ir_transitivity_table[(self.MEETS_INV, self.OVERLAPS_INV)] = [self.BEFORE_INV]
+        ir_transitivity_table[(self.MEETS_INV, self.MEETS)] = [self.STARTS,
+                                                               self.STARTS_INV,
+                                                               self.EQUAL]
+        ir_transitivity_table[(self.MEETS_INV, self.MEETS_INV)] = [self.BEFORE_INV]
+        ir_transitivity_table[(self.MEETS_INV, self.STARTS)] = [self.DURING,
+                                                                self.FINISHES,
+                                                                self.OVERLAPS_INV]
+        ir_transitivity_table[(self.MEETS_INV, self.STARTS_INV)] = [self.BEFORE_INV]
+        ir_transitivity_table[(self.MEETS_INV, self.FINISHES)] = [self.MEETS_INV]
+        ir_transitivity_table[(self.MEETS_INV, self.FINISHES_INV)] = [self.MEETS_INV]
+        ir_transitivity_table[(self.MEETS_INV, self.EQUAL)] = [self.MEETS_INV]
+
+        # ########################################################################    STARTS
+        ir_transitivity_table[(self.STARTS, self.BEFORE)] = [self.BEFORE]
+        ir_transitivity_table[(self.STARTS, self.BEFORE_INV)] = [self.BEFORE_INV]
+        ir_transitivity_table[(self.STARTS, self.DURING)] = [self.DURING]
+        ir_transitivity_table[(self.STARTS, self.DURING_INV)] = [self.BEFORE,
+                                                                 self.OVERLAPS,
+                                                                 self.MEETS,
+                                                                 self.DURING_INV,
+                                                                 self.FINISHES_INV]
+        ir_transitivity_table[(self.STARTS, self.OVERLAPS)] = [self.BEFORE,
+                                                               self.OVERLAPS,
+                                                               self.MEETS]
+        ir_transitivity_table[(self.STARTS, self.OVERLAPS_INV)] = [self.OVERLAPS_INV,
+                                                                   self.DURING,
+                                                                   self.FINISHES]
+        ir_transitivity_table[(self.STARTS, self.MEETS)] = [self.BEFORE]
+        ir_transitivity_table[(self.STARTS, self.MEETS_INV)] = [self.MEETS_INV]
+        ir_transitivity_table[(self.STARTS, self.STARTS)] = [self.STARTS]
+        ir_transitivity_table[(self.STARTS, self.STARTS_INV)] = [self.STARTS,
+                                                                 self.STARTS_INV,
+                                                                 self.EQUAL]
+        ir_transitivity_table[(self.STARTS, self.FINISHES)] = [self.DURING]
+        ir_transitivity_table[(self.STARTS, self.FINISHES_INV)] = [self.BEFORE,
+                                                                   self.MEETS,
+                                                                   self.OVERLAPS]
+        ir_transitivity_table[(self.STARTS, self.EQUAL)] = [self.STARTS]
+
+        # ########################################################################    STARTS_INV
+        ir_transitivity_table[(self.STARTS_INV, self.BEFORE)] = [self.BEFORE,
+                                                                 self.OVERLAPS,
+                                                                 self.MEETS,
+                                                                 self.DURING_INV,
+                                                                 self.FINISHES_INV]
+        ir_transitivity_table[(self.STARTS_INV, self.BEFORE_INV)] = [self.BEFORE_INV]
+        ir_transitivity_table[(self.STARTS_INV, self.DURING)] = [self.OVERLAPS_INV,
+                                                                 self.DURING,
+                                                                 self.FINISHES]
+        ir_transitivity_table[(self.STARTS_INV, self.DURING_INV)] = [self.DURING_INV]
+        ir_transitivity_table[(self.STARTS_INV, self.OVERLAPS)] = [self.OVERLAPS,
+                                                                   self.DURING_INV,
+                                                                   self.FINISHES_INV]
+        ir_transitivity_table[(self.STARTS_INV, self.OVERLAPS_INV)] = [self.OVERLAPS_INV]
+        ir_transitivity_table[(self.STARTS_INV, self.MEETS)] = [self.OVERLAPS,
+                                                                self.DURING_INV,
+                                                                self.FINISHES_INV]
+        ir_transitivity_table[(self.STARTS_INV, self.MEETS_INV)] = [self.MEETS_INV]
+        ir_transitivity_table[(self.STARTS_INV, self.STARTS)] = [self.STARTS,
+                                                                 self.STARTS_INV,
+                                                                 self.EQUAL]
+        ir_transitivity_table[(self.STARTS_INV, self.STARTS_INV)] = [self.STARTS_INV]
+        ir_transitivity_table[(self.STARTS_INV, self.FINISHES)] = [self.OVERLAPS_INV]
+        ir_transitivity_table[(self.STARTS_INV, self.FINISHES_INV)] = [self.DURING_INV]
+        ir_transitivity_table[(self.STARTS_INV, self.EQUAL)] = [self.STARTS_INV]
+
+        # ########################################################################    FINISHES
+        ir_transitivity_table[(self.FINISHES, self.BEFORE)] = [self.BEFORE]
+        ir_transitivity_table[(self.FINISHES, self.BEFORE_INV)] = [self.BEFORE_INV]
+        ir_transitivity_table[(self.FINISHES, self.DURING)] = [self.DURING]
+        ir_transitivity_table[(self.FINISHES, self.DURING_INV)] = [self.BEFORE_INV,
+                                                                   self.OVERLAPS_INV,
+                                                                   self.MEETS_INV,
+                                                                   self.DURING_INV,
+                                                                   self.STARTS_INV]
+        ir_transitivity_table[(self.FINISHES, self.OVERLAPS)] = [self.OVERLAPS,
+                                                                 self.DURING,
+                                                                 self.STARTS]
+        ir_transitivity_table[(self.FINISHES, self.OVERLAPS_INV)] = [self.BEFORE,
+                                                                     self.OVERLAPS_INV,
+                                                                     self.MEETS]
+        ir_transitivity_table[(self.FINISHES, self.MEETS)] = [self.MEETS]
+        ir_transitivity_table[(self.FINISHES, self.MEETS_INV)] = [self.BEFORE_INV]
+        ir_transitivity_table[(self.FINISHES, self.STARTS)] = [self.DURING]
+        ir_transitivity_table[(self.FINISHES, self.STARTS_INV)] = [self.BEFORE_INV,
+                                                                   self.OVERLAPS_INV,
+                                                                   self.MEETS_INV]
+        ir_transitivity_table[(self.FINISHES, self.FINISHES)] = [self.FINISHES]
+        ir_transitivity_table[(self.FINISHES, self.FINISHES_INV)] = [self.FINISHES,
+                                                                     self.FINISHES_INV]
+        ir_transitivity_table[(self.FINISHES, self.EQUAL)] = [self.FINISHES]
+
+        # ########################################################################    FINISHES_INV
+        ir_transitivity_table[(self.FINISHES_INV, self.BEFORE)] = [self.BEFORE]
+        ir_transitivity_table[(self.FINISHES_INV, self.BEFORE_INV)] = [self.BEFORE_INV,
+                                                                       self.OVERLAPS_INV,
+                                                                       self.MEETS_INV,
+                                                                       self.DURING_INV,
+                                                                       self.STARTS_INV]
+        ir_transitivity_table[(self.FINISHES_INV, self.DURING)] = [self.OVERLAPS,
+                                                                   self.DURING,
+                                                                   self.STARTS]
+        ir_transitivity_table[(self.FINISHES_INV, self.DURING_INV)] = [self.DURING_INV]
+        ir_transitivity_table[(self.FINISHES_INV, self.OVERLAPS)] = [self.OVERLAPS]
+        ir_transitivity_table[(self.FINISHES_INV, self.OVERLAPS_INV)] = [self.OVERLAPS_INV,
+                                                                         self.DURING_INV,
+                                                                         self.STARTS_INV]
+        ir_transitivity_table[(self.FINISHES_INV, self.MEETS)] = [self.MEETS]
+        ir_transitivity_table[(self.FINISHES_INV, self.MEETS_INV)] = [self.STARTS_INV,
+                                                                      self.OVERLAPS_INV,
+                                                                      self.DURING_INV]
+        ir_transitivity_table[(self.FINISHES_INV, self.STARTS)] = [self.OVERLAPS]
+        ir_transitivity_table[(self.FINISHES_INV, self.STARTS_INV)] = [self.DURING_INV]
+        ir_transitivity_table[(self.FINISHES_INV, self.FINISHES)] = [self.FINISHES,
+                                                                     self.FINISHES_INV,
+                                                                     self.EQUAL]
+        ir_transitivity_table[(self.FINISHES_INV, self.FINISHES_INV)] = [self.FINISHES_INV]
+        ir_transitivity_table[(self.FINISHES_INV, self.EQUAL)] = [self.FINISHES_INV]
+
+        # ########################################################################    EQUAL
+        ir_transitivity_table[(self.EQUAL, self.BEFORE)] = [self.BEFORE]
+        ir_transitivity_table[(self.EQUAL, self.BEFORE_INV)] = [self.BEFORE_INV]
+        ir_transitivity_table[(self.EQUAL, self.DURING)] = [self.DURING]
+        ir_transitivity_table[(self.EQUAL, self.DURING_INV)] = [self.DURING_INV]
+        ir_transitivity_table[(self.EQUAL, self.OVERLAPS)] = [self.OVERLAPS]
+        ir_transitivity_table[(self.EQUAL, self.OVERLAPS_INV)] = [self.OVERLAPS_INV]
+        ir_transitivity_table[(self.EQUAL, self.MEETS)] = [self.MEETS]
+        ir_transitivity_table[(self.EQUAL, self.MEETS_INV)] = [self.MEETS_INV]
+        ir_transitivity_table[(self.EQUAL, self.STARTS)] = [self.STARTS]
+        ir_transitivity_table[(self.EQUAL, self.STARTS_INV)] = [self.STARTS_INV]
+        ir_transitivity_table[(self.EQUAL, self.FINISHES)] = [self.FINISHES]
+        ir_transitivity_table[(self.EQUAL, self.FINISHES_INV)] = [self.FINISHES_INV]
+        ir_transitivity_table[(self.EQUAL, self.EQUAL)] = [self.EQUAL]
+
+        return ir_transitivity_table
+
