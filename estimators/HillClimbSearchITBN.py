@@ -36,6 +36,7 @@ class HillClimbSearchITBN(HillClimbSearch):
             every row where neither the variable nor its parents are `np.NaN` is used.
             This sets the behavior of the `state_count`-method.
         """
+
         super(HillClimbSearchITBN, self).__init__(data, **kwargs)
 
     def _legal_operations(self, model, tabu_list=[], max_indegree=None):
@@ -55,13 +56,18 @@ class HillClimbSearchITBN(HillClimbSearch):
 
         for (X, Y) in potential_new_edges:  # (1) add single edge
             if nx.is_directed_acyclic_graph(nx.DiGraph(list(model.edges()) + [(X, Y)])):
-                operation = ('+', (X, Y))
-                if operation not in tabu_list:
-                    old_parents = list(model.get_parents(Y))
-                    new_parents = old_parents + [X]
-                    if max_indegree is None or len(new_parents) <= max_indegree:
-                        score_delta = local_score(Y, new_parents) - local_score(Y, old_parents)
-                        yield(operation, score_delta)
+                if self.valid_temporal_relations(list(model.edges()), [(X, Y)], model):
+                    operation = ('+', (X, Y))
+                    if operation not in tabu_list:
+                        old_parents = list(model.get_parents(Y))
+                        new_parents = old_parents + [X]
+                        if max_indegree is None or len(new_parents) <= max_indegree:
+                            temporal_node_parents = [X, Y]
+                            temporal_node = X + Y
+                            score_delta = (local_score(Y, new_parents) -
+                                           local_score(Y, old_parents) +
+                                           local_score(temporal_node, temporal_node_parents))
+                            yield(operation, score_delta)
 
         for (X, Y) in model.edges():  # (2) remove single edge
             operation = ('-', (X, Y))
@@ -69,26 +75,37 @@ class HillClimbSearchITBN(HillClimbSearch):
                 old_parents = list(model.get_parents(Y))
                 new_parents = old_parents[:]
                 new_parents.remove(X)
-                score_delta = local_score(Y, new_parents) - local_score(Y, old_parents)
+                temporal_node_parents = [X, Y]
+                temporal_node = X + Y
+                score_delta = (local_score(Y, new_parents) -
+                               local_score(Y, old_parents) -
+                               local_score(temporal_node, temporal_node_parents))
                 yield(operation, score_delta)
 
         for (X, Y) in model.edges():  # (3) flip single edge
             new_edges = list(model.edges()) + [(Y, X)]
             new_edges.remove((X, Y))
             if nx.is_directed_acyclic_graph(nx.DiGraph(new_edges)):
-                operation = ('flip', (X, Y))
-                if operation not in tabu_list and ('flip', (Y, X)) not in tabu_list:
-                    old_X_parents = list(model.get_parents(X))
-                    old_Y_parents = list(model.get_parents(Y))
-                    new_X_parents = old_X_parents + [Y]
-                    new_Y_parents = old_Y_parents[:]
-                    new_Y_parents.remove(X)
-                    if max_indegree is None or len(new_X_parents) <= max_indegree:
-                        score_delta = (local_score(X, new_X_parents) +
-                                       local_score(Y, new_Y_parents) -
-                                       local_score(X, old_X_parents) -
-                                       local_score(Y, old_Y_parents))
-                        yield(operation, score_delta)
+                if self.valid_temporal_relations(list(model.edges()), [(X, Y)], model):
+                    operation = ('flip', (X, Y))
+                    if operation not in tabu_list and ('flip', (Y, X)) not in tabu_list:
+                        old_X_parents = list(model.get_parents(X))
+                        old_Y_parents = list(model.get_parents(Y))
+                        new_X_parents = old_X_parents + [Y]
+                        new_Y_parents = old_Y_parents[:]
+                        new_Y_parents.remove(X)
+                        if max_indegree is None or len(new_X_parents) <= max_indegree:
+                            temporal_node_parents = [Y, X]
+                            temporal_node = Y + X
+                            old_temp_node_parents = [X, Y]
+                            old_temp_node = X + Y
+                            score_delta = (local_score(X, new_X_parents) +
+                                           local_score(Y, new_Y_parents) -
+                                           local_score(X, old_X_parents) -
+                                           local_score(Y, old_Y_parents) +
+                                           local_score(temporal_node, temporal_node_parents) -
+                                           local_score(old_temp_node, old_temp_node_parents))
+                            yield(operation, score_delta)
 
     def estimate(self, start=None, tabu_length=0, max_indegree=None):
         """
@@ -172,3 +189,9 @@ class HillClimbSearchITBN(HillClimbSearch):
                 tabu_list = ([best_operation] + tabu_list)[:tabu_length]
 
         return current_model
+
+    def valid_temporal_relations(self, edges, new_edge, model):
+        triangles = self.get_triangles(edges, new_edge)
+        for triangle in triangles:
+            model.relation_map
+        return False

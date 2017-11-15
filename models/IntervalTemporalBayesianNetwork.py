@@ -10,6 +10,7 @@ import os
 from pgmpy.models import BayesianModel
 from pgmpy.models.MarkovModel import MarkovModel
 
+
 class IntervalTemporalBayesianNetwork(BayesianModel):
     """
     Base class for interval temporal bayesian network model. (ITBN)
@@ -366,6 +367,11 @@ class IntervalTemporalBayesianNetwork(BayesianModel):
         with open(dot_file, "w") as output_file:
             output_file.write(output)
         os.system('dot ' + dot_file + ' -Tpng -o ' + file_path)
+
+    def add_nodes_from(self, nodes, weights=None):
+        nodes = [node for node in nodes if not node.endswith(self.start_time_marker)
+                 and not node.endswith(self.end_time_marker)]
+        super(IntervalTemporalBayesianNetwork, self).add_nodes_from(nodes, weights)
 
     def load_interval_relation_transitivity_table(self):
         ir_transitivity_table = dict()
