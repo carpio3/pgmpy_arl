@@ -309,6 +309,7 @@ class IntervalTemporalBayesianNetwork(BayesianModel):
                             data.at[getattr(sample, 'Index'), self.temporal_node_marker +
                                     node_a + "_" + node_b] = relation
                 relation_map[(node_a, node_b)] = sorted(relation_set)
+        self.add_nodes_from(list(data.columns.values))
         self.relation_map = relation_map
 
     def calculate_relationship(self, sample, node_a, node_b):
@@ -372,6 +373,11 @@ class IntervalTemporalBayesianNetwork(BayesianModel):
         nodes = [node for node in nodes if not node.endswith(self.start_time_marker)
                  and not node.endswith(self.end_time_marker)]
         super(IntervalTemporalBayesianNetwork, self).add_nodes_from(nodes, weights)
+
+    def event_edges(self):
+        edges = [edge for edge in super(IntervalTemporalBayesianNetwork, self).edges() if
+                 not edge[1].startswith(self.temporal_node_marker)]
+        return edges
 
     def load_interval_relation_transitivity_table(self):
         ir_transitivity_table = dict()
