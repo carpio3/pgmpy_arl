@@ -55,7 +55,7 @@ class HillClimbSearchITBN(HillClimbSearch):
 
         for (X, Y) in potential_new_edges:  # (1) add single edge
             if nx.is_directed_acyclic_graph(nx.DiGraph(list(model.edges()) + [(X, Y)])):
-                if self.valid_temporal_relations(list(model.edges()), [(X, Y)], model):
+                if self.valid_temporal_relations([(X, Y)], model):
                     operation = ('+', (X, Y))
                     if operation not in tabu_list:
                         old_parents = list(model.get_parents(Y))
@@ -85,7 +85,7 @@ class HillClimbSearchITBN(HillClimbSearch):
             new_edges = list(model.edges()) + [(Y, X)]
             new_edges.remove((X, Y))
             if nx.is_directed_acyclic_graph(nx.DiGraph(new_edges)):
-                if self.valid_temporal_relations(list(model.edges()), [(X, Y)], model):
+                if self.valid_temporal_relations([(X, Y)], model):
                     operation = ('flip', (X, Y))
                     if operation not in tabu_list and ('flip', (Y, X)) not in tabu_list:
                         old_X_parents = list(model.get_parents(X))
@@ -205,9 +205,14 @@ class HillClimbSearchITBN(HillClimbSearch):
 
         return current_model
 
-    def valid_temporal_relations(self, edges, new_edge, model):
+    def valid_temporal_relations(self, new_edge, model):
         return True
+        edges = list(model.edges())
         triangles = self.get_triangles(edges, new_edge)
         for triangle in triangles:
-            model.relation_map
+            for edge in triangle:
+                print edge
         return False
+
+    def get_triangles(self, edges, new_edge):
+        return None
