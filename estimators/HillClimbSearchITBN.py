@@ -207,11 +207,10 @@ class HillClimbSearchITBN(HillClimbSearch):
 
     def valid_temporal_relations(self, new_edge, model):
         return True
-        edges = list(model.edges())
-        triangles = self.get_triangles(edges, new_edge)
-        for triangle in triangles:
-            for edge in triangle:
-                print edge
+        edges = list(model.edges()) + [new_edge]
+        triangles = [tri for tri in nx.enumerate_all_cliques(nx.Graph(edges)) if len(tri) == 3]
+        if len(triangles) < 1:
+            return True
         return False
 
     def get_triangles(self, edges, new_edge):
