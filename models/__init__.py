@@ -17,6 +17,7 @@ __all__ = ['BayesianModel',
            'JunctionTree',
            'ClusterGraph',
            'DynamicBayesianNetwork',
+           'IntervalTemporalBayesianNetwork',
            'MarkovChain',
            'NaiveBayes',
            'LinearGaussianBayesianNetwork']
