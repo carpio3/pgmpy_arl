@@ -123,7 +123,10 @@ class BaseEstimator(object):
             #                  did not occur in data
             row_index = self.state_names[variable]
             column_index = pd.MultiIndex.from_product(parents_states, names=parents)
-            state_counts = state_count_data.reindex(index=row_index, columns=column_index).fillna(0)
+            if len(column_index.levels) == 1:
+                state_counts = state_count_data.reindex(index=row_index, columns=column_index.levels[0]).fillna(0)
+            else:
+                state_counts = state_count_data.reindex(index=row_index, columns=column_index).fillna(0)
 
         return state_counts
 
