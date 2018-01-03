@@ -81,7 +81,9 @@ class MaximumLikelihoodEstimator(ParameterEstimator):
 
         for node in sorted(nodes):
             cpd = self.estimate_cpd(node)
-            parameters.append(cpd)
+            if not (node.startswith(IntervalTemporalBayesianNetwork.temporal_node_marker) and
+                    len(list(self.model.get_parents(node))) == 0):
+                parameters.append(cpd)
 
         return parameters
 

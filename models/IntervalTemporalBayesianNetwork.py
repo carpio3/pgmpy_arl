@@ -25,6 +25,7 @@ class IntervalTemporalBayesianNetwork(BayesianModel):
 
     Edges are represented as links between nodes.
     """
+    observation_node_marker = "obs_"
     temporal_node_marker = "tm_"
     start_time_marker = "_s"
     end_time_marker = "_e"
@@ -349,11 +350,15 @@ class IntervalTemporalBayesianNetwork(BayesianModel):
                     self.add_edge(edge[0], temporal_node)
                     self.add_edge(edge[1], temporal_node)
 
-    def draw_to_file(self, file_path):
+    def draw_to_file(self, file_path, include_obs=False):
         drawn_edges = set()
         output = "strict digraph {\n"
         for event in self.event_nodes:
             output += event + " [weight=None]\n"
+        if include_obs:
+            for node in self.nodes():
+                if node.startswith(self.observation_node_marker):
+                    output += node.replace(self.observation_node_marker, '') + " [weight=None, style=dotted]\n"
         for edge in self.edges():
             if (edge[1].startswith(self.temporal_node_marker) and
                     edge[1] not in drawn_edges):
@@ -363,6 +368,9 @@ class IntervalTemporalBayesianNetwork(BayesianModel):
                                          self.relation_map[(edge_nodes[0], edge_nodes[1])])
                 output += edge_nodes[0] + " -> " + edge_nodes[1] + " [weight=None, label=\" " + \
                           relations_str + " \"]\n"
+            elif include_obs and edge[0].startswith(self.observation_node_marker):
+                output += edge[0].replace(self.observation_node_marker, '') + " -> " + edge[1] + \
+                          " [weight=None, style=dotted]\n"
         output += "}"
         dot_file = file_path.replace('.png', '.dot')
         with open(dot_file, "w") as output_file:

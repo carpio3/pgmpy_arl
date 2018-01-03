@@ -172,6 +172,14 @@ class HillClimbSearchITBN(HillClimbSearch):
                 if score_delta > best_score_delta:
                     best_operation = operation
                     best_score_delta = score_delta
+                # # the following condition gives preference to inverse relations in order to facilitate the
+                # # interpretation of the final model and the inference process
+                # if (best_operation is not None and abs(score_delta - best_score_delta) < epsilon and
+                #         operation[1][0] == best_operation[1][1] and operation[1][1] == best_operation[1][0]):
+                #     if len(current_model.relation_map[operation[1]]) > 0:
+                #         # inverse relations have even identifiers
+                #         if current_model.relation_map[operation[1]][0] % 2 == 0:
+                #             best_operation = operation
 
             if best_operation is None or best_score_delta < epsilon:
                 break
