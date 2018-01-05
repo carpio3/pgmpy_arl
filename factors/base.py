@@ -2,6 +2,8 @@ from abc import abstractmethod
 
 from pgmpy.extern.six.moves import reduce
 
+import numpy as np
+
 
 class BaseFactor(object):
     """
@@ -13,6 +15,18 @@ class BaseFactor(object):
     @abstractmethod
     def is_valid_cpd(self):
         pass
+
+
+def replace_absolute_values(values, index):
+    if not isinstance(values[index], np.ndarray):
+        if values[index] == 0:
+            values[index] = 0.001
+        elif values[index] == 1:
+            values[index] = 0.999
+    else:
+        for i in range(len(values[index])):
+            replace_absolute_values(values[index], i)
+
 
 def factor_product(*args):
     """
@@ -66,10 +80,7 @@ def factor_product(*args):
                                       "be instances of the same factor class.")
     for arg in args:
         for i in range(len(arg.values)):
-            if arg.values[i] == 0:
-                arg.values[i] = 0.001
-            elif arg.values[i] == 1:
-                arg.values[i] = 0.999
+            replace_absolute_values(arg.values, i)
 
     return reduce(lambda phi1, phi2: phi1 * phi2, args)
 
