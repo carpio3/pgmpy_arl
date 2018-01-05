@@ -82,29 +82,30 @@ class HillClimbSearchITBN(HillClimbSearch):
                 yield(operation, score_delta)
 
         for (X, Y) in model.event_edges():  # (3) flip single edge
-            new_edges = list(model.edges()) + [(Y, X)]
-            new_edges.remove((X, Y))
-            if nx.is_directed_acyclic_graph(nx.DiGraph(new_edges)):
-                if self.valid_temporal_relations([(X, Y)], model):
-                    operation = ('flip', (X, Y))
-                    if operation not in tabu_list and ('flip', (Y, X)) not in tabu_list:
-                        old_X_parents = list(model.get_parents(X))
-                        old_Y_parents = list(model.get_parents(Y))
-                        new_X_parents = old_X_parents + [Y]
-                        new_Y_parents = old_Y_parents[:]
-                        new_Y_parents.remove(X)
-                        if max_indegree is None or len(new_X_parents) <= max_indegree:
-                            temporal_node_parents = [Y, X]
-                            temporal_node = ITBN.temporal_node_marker + Y + "_" + X
-                            old_temp_node_parents = [X, Y]
-                            old_temp_node = ITBN.temporal_node_marker + X + "_" + Y
-                            score_delta = (local_score(X, new_X_parents) +
-                                           local_score(Y, new_Y_parents) -
-                                           local_score(X, old_X_parents) -
-                                           local_score(Y, old_Y_parents) +
-                                           local_score(temporal_node, temporal_node_parents) -
-                                           local_score(old_temp_node, old_temp_node_parents))
-                            yield(operation, score_delta)
+            if len(model.relation_map[(Y, X)]) > 0:
+                new_edges = list(model.edges()) + [(Y, X)]
+                new_edges.remove((X, Y))
+                if nx.is_directed_acyclic_graph(nx.DiGraph(new_edges)):
+                    if self.valid_temporal_relations([(X, Y)], model):
+                        operation = ('flip', (X, Y))
+                        if operation not in tabu_list and ('flip', (Y, X)) not in tabu_list:
+                            old_X_parents = list(model.get_parents(X))
+                            old_Y_parents = list(model.get_parents(Y))
+                            new_X_parents = old_X_parents + [Y]
+                            new_Y_parents = old_Y_parents[:]
+                            new_Y_parents.remove(X)
+                            if max_indegree is None or len(new_X_parents) <= max_indegree:
+                                temporal_node_parents = [Y, X]
+                                temporal_node = ITBN.temporal_node_marker + Y + "_" + X
+                                old_temp_node_parents = [X, Y]
+                                old_temp_node = ITBN.temporal_node_marker + X + "_" + Y
+                                score_delta = (local_score(X, new_X_parents) +
+                                               local_score(Y, new_Y_parents) -
+                                               local_score(X, old_X_parents) -
+                                               local_score(Y, old_Y_parents) +
+                                               local_score(temporal_node, temporal_node_parents) -
+                                               local_score(old_temp_node, old_temp_node_parents))
+                                yield(operation, score_delta)
 
     def estimate(self, start=None, tabu_length=0, max_indegree=None):
         """

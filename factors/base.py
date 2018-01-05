@@ -64,6 +64,12 @@ def factor_product(*args):
     elif len(set(map(type, args))) != 1:
             raise NotImplementedError("All the args are expected to ",
                                       "be instances of the same factor class.")
+    for arg in args:
+        for i in range(len(arg.values)):
+            if arg.values[i] == 0:
+                arg.values[i] = 0.001
+            elif arg.values[i] == 1:
+                arg.values[i] = 0.999
 
     return reduce(lambda phi1, phi2: phi1 * phi2, args)
 

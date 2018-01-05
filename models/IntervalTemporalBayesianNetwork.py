@@ -229,7 +229,11 @@ class IntervalTemporalBayesianNetwork(BayesianModel):
         pred_values = defaultdict(list)
 
         # Send state_names dict from one of the estimated CPDs to the inference class.
-        model_inference = VariableElimination(self, state_names=self.get_cpds()[0].state_names)
+        state_names = dict()
+        for cpd in self.get_cpds():
+            for key, value in cpd.state_names.items():
+                state_names[key] = value
+        model_inference = VariableElimination(self, state_names=state_names)
         for index, data_point in data.iterrows():
             states_dict = model_inference.map_query(variables=missing_variables,
                                                     evidence=data_point.to_dict())
@@ -306,9 +310,10 @@ class IntervalTemporalBayesianNetwork(BayesianModel):
                         if (getattr(sample, node_a + self.start_time_marker) >= 0 and
                                 getattr(sample, node_b + self.start_time_marker) >= 0):
                             relation = self.calculate_relationship(sample, node_a, node_b)
-                            relation_set.add(relation)
-                            data.at[getattr(sample, 'Index'), self.temporal_node_marker +
-                                    node_a + "_" + node_b] = relation
+                            if relation % 2 == 0 or relation == self.EQUAL:
+                                relation_set.add(relation)
+                                data.at[getattr(sample, 'Index'), self.temporal_node_marker +
+                                        node_a + "_" + node_b] = relation
                 relation_map[(node_a, node_b)] = sorted(relation_set)
         self.add_nodes_from(list(data.columns.values))
         self.relation_map = relation_map
@@ -353,12 +358,16 @@ class IntervalTemporalBayesianNetwork(BayesianModel):
     def draw_to_file(self, file_path, include_obs=False):
         drawn_edges = set()
         output = "strict digraph {\n"
+        if self.event_nodes is None:
+            self.event_nodes = set(
+                [node for node in self.nodes() if (not node.startswith(self.temporal_node_marker)
+                                                   and not node.startswith(self.observation_node_marker))])
         for event in self.event_nodes:
             output += event + " [weight=None]\n"
         if include_obs:
             for node in self.nodes():
                 if node.startswith(self.observation_node_marker):
-                    output += node.replace(self.observation_node_marker, '') + " [weight=None, style=dotted]\n"
+                    output += node + " [weight=None, style=dotted]\n"
         for edge in self.edges():
             if (edge[1].startswith(self.temporal_node_marker) and
                     edge[1] not in drawn_edges):
@@ -368,9 +377,8 @@ class IntervalTemporalBayesianNetwork(BayesianModel):
                                          self.relation_map[(edge_nodes[0], edge_nodes[1])])
                 output += edge_nodes[0] + " -> " + edge_nodes[1] + " [weight=None, label=\" " + \
                           relations_str + " \"]\n"
-            elif include_obs and edge[0].startswith(self.observation_node_marker):
-                output += edge[0].replace(self.observation_node_marker, '') + " -> " + edge[1] + \
-                          " [weight=None, style=dotted]\n"
+            elif include_obs and edge[1].startswith(self.observation_node_marker):
+                output += edge[0] + " -> " + edge[1] + " [weight=None, style=dotted]\n"
         output += "}"
         dot_file = file_path.replace('.png', '.dot')
         with open(dot_file, "w") as output_file:
@@ -789,3 +797,15 @@ class IntervalTemporalBayesianNetwork(BayesianModel):
 
         return ir_transitivity_table
 
+    def learn_temporal_relationships_from_cpds(self):
+        self.relation_map = dict()
+        for cpd in self.cpds:
+            for key, value in cpd.state_names.items():
+                if key.startswith(IntervalTemporalBayesianNetwork.temporal_node_marker):
+                    nodes = key.replace(IntervalTemporalBayesianNetwork.temporal_node_marker, '').split('_')
+                    new_key = (nodes[0], nodes[1])
+                    relations = list()
+                    for element in value:
+                        if element != 0:
+                            relations.append(element)
+                    self.relation_map[new_key] = sorted(relations)
